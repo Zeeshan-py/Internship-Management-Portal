@@ -11,7 +11,7 @@ import {
   Search,
   Filter,
   ArrowRight,
-  Loader
+  Loader2 as Loader
 } from 'lucide-react';
 import api from '../services/api';
 
