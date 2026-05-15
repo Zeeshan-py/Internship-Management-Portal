@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Clock
 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import api from '../services/api';
 
 const AdminDashboard = () => {
@@ -35,6 +36,7 @@ const AdminDashboard = () => {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -51,9 +53,11 @@ const AdminDashboard = () => {
       if (response.data.success) {
         setIsLoggedIn(true);
         setLoginError('');
+        toast.success('Access Granted');
       }
     } catch (err) {
       setLoginError('Invalid credentials. Access denied.');
+      toast.error('Login Failed');
     }
   };
 
@@ -67,10 +71,21 @@ const AdminDashboard = () => {
         setError('Received invalid data format from server.');
       }
     } catch (err) {
-      setError('Failed to fetch applications. Please check connection.');
+      setError('Failed to fetch applications.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleStatusUpdate = (id, status) => {
+    setUpdating(true);
+    // Simulate API call for status update
+    setTimeout(() => {
+      setApplications(prev => prev.map(app => app._id === id ? { ...app, status: status } : app));
+      setUpdating(false);
+      setSelectedApplication(null);
+      toast.success(`Application ${status} successfully!`);
+    }, 1000);
   };
 
   const filteredApplications = applications.filter(app => {
@@ -82,14 +97,15 @@ const AdminDashboard = () => {
 
   const stats = [
     { label: 'Total Applicants', value: applications.length, icon: <Users size={20} />, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Web Development', value: applications.filter(a => a.domain === 'Web Development').length, icon: <LayoutDashboard size={20} />, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Pending Review', value: applications.length, icon: <Clock size={20} />, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Approved', value: applications.filter(a => a.status === 'Approved').length, icon: <CheckCircle size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Rejected', value: applications.filter(a => a.status === 'Rejected').length, icon: <XCircle size={20} />, color: 'text-red-600', bg: 'bg-red-50' },
     { label: 'Growth', value: '+12%', icon: <TrendingUp size={20} />, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ];
 
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <Toaster position="top-right" />
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-slate-900 border border-white/10 p-10 rounded-[2.5rem] max-w-md w-full shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600 opacity-10 rounded-bl-full"></div>
           <div className="text-center mb-8">
@@ -112,8 +128,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
+      <Toaster position="top-right" />
       {/* Sidebar */}
-      <aside className="hidden lg:flex w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col sticky top-0 h-screen">
+      <aside className="hidden lg:flex w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col sticky top-0 h-screen z-10">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black">T</div>
@@ -144,7 +161,7 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-6 lg:p-12 overflow-y-auto">
-        <header className="flex justify-between items-center mb-12">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
           <div>
             <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">System Overview</h1>
             <p className="text-slate-500 font-medium">Monitoring all active internship applications</p>
@@ -196,7 +213,7 @@ const AdminDashboard = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left min-w-[800px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900/50">
                   <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Applicant</th>
@@ -222,7 +239,7 @@ const AdminDashboard = () => {
                     <tr key={app._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center font-bold">{app.name.charAt(0)}</div>
+                          <div className="w-10 h-10 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center font-bold uppercase">{app.name.charAt(0)}</div>
                           <div>
                             <p className="font-black text-slate-900 dark:text-white">{app.name}</p>
                             <p className="text-xs font-bold text-slate-500">{app.email}</p>
@@ -233,9 +250,9 @@ const AdminDashboard = () => {
                         <span className="badge badge-blue">{app.domain}</span>
                       </td>
                       <td className="px-8 py-5">
-                        <span className="badge badge-amber flex items-center gap-1 w-fit">
-                          <div className="w-1.5 h-1.5 bg-amber-600 rounded-full"></div>
-                          Pending Review
+                        <span className={`badge flex items-center gap-1 w-fit ${app.status === 'Approved' ? 'badge-green' : app.status === 'Rejected' ? 'badge-red' : 'badge-amber'}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${app.status === 'Approved' ? 'bg-emerald-600' : app.status === 'Rejected' ? 'bg-red-600' : 'bg-amber-600'}`}></div>
+                          {app.status || 'Pending Review'}
                         </span>
                       </td>
                       <td className="px-8 py-5 text-sm font-bold text-slate-600 dark:text-slate-400">
@@ -257,12 +274,12 @@ const AdminDashboard = () => {
         {/* Details Modal */}
         <AnimatePresence>
           {selectedApplication && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl">
                 <div className="p-10">
                   <div className="flex justify-between items-start mb-10">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-3xl">{selectedApplication.name.charAt(0)}</div>
+                      <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-3xl uppercase">{selectedApplication.name.charAt(0)}</div>
                       <div>
                         <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight">{selectedApplication.name}</h2>
                         <div className="flex items-center gap-2 mt-1">
@@ -277,7 +294,7 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-2 gap-8 mb-10">
                     <div className="space-y-1">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</p>
-                      <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2"><Mail size={16} className="text-blue-600" />{selectedApplication.email}</p>
+                      <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate"><Mail size={16} className="text-blue-600 shrink-0" />{selectedApplication.email}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Phone</p>
@@ -287,18 +304,26 @@ const AdminDashboard = () => {
 
                   <div className="space-y-3">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cover Letter</p>
-                    <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 italic text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                    <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 italic text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
                       "{selectedApplication.message}"
                     </div>
                   </div>
 
                   <div className="mt-10 pt-8 border-t border-slate-100 dark:border-slate-800 flex gap-4">
-                    <button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95">
-                      <CheckCircle size={18} />
+                    <button 
+                      onClick={() => handleStatusUpdate(selectedApplication._id, 'Approved')}
+                      disabled={updating}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      {updating ? <Loader size={18} className="animate-spin" /> : <CheckCircle size={18} />}
                       Approve Candidate
                     </button>
-                    <button className="flex-1 bg-red-600/10 text-red-600 py-4 rounded-2xl font-black text-sm hover:bg-red-600/20 transition-all">
-                      Reject
+                    <button 
+                      onClick={() => handleStatusUpdate(selectedApplication._id, 'Rejected')}
+                      disabled={updating}
+                      className="flex-1 bg-red-600/10 text-red-600 py-4 rounded-2xl font-black text-sm hover:bg-red-600/20 transition-all disabled:opacity-50"
+                    >
+                      {updating ? <Loader size={18} className="animate-spin" /> : 'Reject'}
                     </button>
                   </div>
                 </div>

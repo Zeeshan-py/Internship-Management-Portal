@@ -114,13 +114,47 @@ const Home = () => {
                 <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
                 <div className="ml-4 h-6 w-64 bg-white/5 rounded-lg"></div>
               </div>
-              <div className="grid grid-cols-4 gap-4 h-80">
-                <div className="col-span-1 bg-white/5 rounded-2xl"></div>
+              <div className="grid grid-cols-4 gap-4 h-full">
+                <div className="col-span-1 bg-white/5 rounded-2xl p-4 space-y-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-2 w-full bg-white/10 rounded"></div>
+                  ))}
+                  <div className="pt-8 space-y-4">
+                    <div className="h-8 w-8 bg-blue-600 rounded-lg"></div>
+                    <div className="h-8 w-8 bg-white/5 rounded-lg"></div>
+                    <div className="h-8 w-8 bg-white/5 rounded-lg"></div>
+                  </div>
+                </div>
                 <div className="col-span-3 space-y-4">
-                  <div className="h-20 bg-white/5 rounded-2xl"></div>
-                  <div className="grid grid-cols-2 gap-4 h-full">
-                    <div className="bg-white/5 rounded-2xl"></div>
-                    <div className="bg-white/5 rounded-2xl"></div>
+                  <div className="h-24 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-2xl p-4 flex items-center justify-between border border-white/5">
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-white/20 rounded"></div>
+                      <div className="h-6 w-48 bg-white/40 rounded"></div>
+                    </div>
+                    <div className="flex -space-x-2">
+                      {[1, 2, 3].map(i => <div key={i} className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-900"></div>)}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 h-[180px]">
+                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                      <div className="h-3 w-20 bg-white/20 mb-4 rounded"></div>
+                      <div className="flex items-end gap-2 h-20">
+                        {[40, 70, 45, 90, 65, 80].map((h, idx) => (
+                          <div key={idx} className="flex-1 bg-blue-600/40 rounded-t" style={{ height: `${h}%` }}></div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
+                      <div className="h-3 w-24 bg-white/20 mb-2 rounded"></div>
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded bg-emerald-500/20 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          </div>
+                          <div className="h-2 flex-1 bg-white/10 rounded"></div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
