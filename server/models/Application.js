@@ -31,6 +31,11 @@ const applicationSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a message'],
     },
+    status: {
+      type: String,
+      enum: ['Pending Review', 'Approved', 'Rejected'],
+      default: 'Pending Review',
+    },
   },
   {
     timestamps: true, // Automatically creates 'createdAt' and 'updatedAt' fields

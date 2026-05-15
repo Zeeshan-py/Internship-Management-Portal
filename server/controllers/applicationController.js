@@ -85,3 +85,35 @@ export const adminLogin = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Update application status
+// @route   PUT /api/applications/:id/status
+export const updateApplicationStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const { id } = req.params;
+
+    if (!['Approved', 'Rejected', 'Pending Review'].includes(status)) {
+      res.status(400);
+      throw new Error('Invalid status value');
+    }
+
+    const application = await Application.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!application) {
+      res.status(404);
+      throw new Error('Application not found');
+    }
+
+    res.status(200).json({
+      success: true,
+      data: application,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

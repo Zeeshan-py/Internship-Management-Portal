@@ -270,7 +270,7 @@ const Home = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-slate-200"></div>
                   <div>
-                    <p className="font-black text-slate-900 dark:text-white">Zeeshan Ahmad</p>
+                    <p className="font-black text-slate-900 dark:text-white">Ahmad Khan</p>
                     <p className="text-xs font-bold text-slate-500 uppercase">Web Dev Intern @ Teyzix</p>
                   </div>
                 </div>

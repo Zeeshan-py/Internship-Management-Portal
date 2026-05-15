@@ -1,5 +1,5 @@
 import express from 'express';
-import { createApplication, getApplications, adminLogin } from '../controllers/applicationController.js';
+import { createApplication, getApplications, adminLogin, updateApplicationStatus } from '../controllers/applicationController.js';
 
 const router = express.Router();
 
@@ -7,5 +7,6 @@ const router = express.Router();
 router.post('/', createApplication); // POST /api/applications
 router.get('/all', getApplications); // GET /api/applications/all
 router.post('/login', adminLogin); // POST /api/applications/login
+router.put('/:id/status', updateApplicationStatus); // PUT /api/applications/:id/status
 
 export default router;
