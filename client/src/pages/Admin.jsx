@@ -21,10 +21,30 @@ const AdminDashboard = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDomain, setFilterDomain] = useState('All');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
-    fetchApplications();
-  }, []);
+    if (isLoggedIn) {
+      fetchApplications();
+    } else {
+      setLoading(false);
+    }
+  }, [isLoggedIn]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await api.post('/applications/login', { password });
+      if (response.data.success) {
+        setIsLoggedIn(true);
+        setLoginError('');
+      }
+    } catch (err) {
+      setLoginError('Invalid password. Access denied.');
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -33,17 +53,52 @@ const AdminDashboard = () => {
       if (response.data && Array.isArray(response.data.data)) {
         setApplications(response.data.data);
       } else {
-        console.error('Unexpected response format:', response.data);
         setError('Received invalid data format from server.');
       }
-      setError(null);
     } catch (err) {
       setError('Failed to fetch applications. Please ensure the backend is running.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-slate-900 border border-white/10 p-8 rounded-[2rem] max-w-md w-full shadow-2xl"
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-black text-white mb-2">Admin Login</h2>
+            <p className="text-slate-400">Enter password to access dashboard</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <input
+              type="password"
+              placeholder="Enter Admin Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-slate-950 border border-white/10 rounded-xl px-5 py-4 text-white focus:border-blue-600 focus:outline-none transition-all"
+            />
+            {loginError && <p className="text-red-500 text-sm font-bold text-center">{loginError}</p>}
+            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition-all active:scale-95">
+              Login to Dashboard
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-20">
+        <Loader className="w-12 h-12 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
   const filteredApplications = applications.filter(app => {
     const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -53,14 +108,6 @@ const AdminDashboard = () => {
   });
 
   const domains = ['All', 'Web Development', 'UI/UX Design', 'Data Science', 'Mobile App Development', 'Cyber Security'];
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
-        <Loader className="w-12 h-12 text-blue-600 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8">

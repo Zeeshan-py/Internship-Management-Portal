@@ -69,3 +69,18 @@ export const getApplications = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Admin login
+// @route   POST /api/applications/login
+export const adminLogin = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    
+    if (password === process.env.ADMIN_PASSWORD) {
+      res.status(200).json({ success: true, message: 'Logged in successfully' });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid password' });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
