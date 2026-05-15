@@ -15,7 +15,8 @@ import {
   Layers,
   ChevronRight,
   Star,
-  MessageCircle
+  MessageCircle,
+  ChevronDown
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
