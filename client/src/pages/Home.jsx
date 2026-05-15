@@ -259,19 +259,38 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((_, idx) => (
+            {[
+              {
+                name: "Sarah Jenkins",
+                role: "Frontend Intern @ Google",
+                quote: "The AI & ML internship gave me hands-on experience that I couldn't get in college. The mentorship was world-class.",
+                avatar: "https://i.pravatar.cc/150?u=sarah"
+              },
+              {
+                name: "David Chen",
+                role: "Backend Intern @ Amazon",
+                quote: "Teyzix Core bridged the gap between my academic theory and professional implementation perfectly.",
+                avatar: "https://i.pravatar.cc/150?u=david"
+              },
+              {
+                name: "Ahmad Khan",
+                role: "Web Dev Intern @ Teyzix",
+                quote: "The multi-step application process was smooth, and the dashboard tracking kept me motivated throughout.",
+                avatar: "https://i.pravatar.cc/150?u=ahmad"
+              }
+            ].map((student, idx) => (
               <div key={idx} className="card-premium">
                 <div className="flex gap-1 text-amber-500 mb-6">
                   {[1, 2, 3, 4, 5].map(s => <Star key={s} size={16} fill="currentColor" />)}
                 </div>
                 <p className="text-slate-600 dark:text-slate-300 italic mb-8 leading-relaxed">
-                  "The internship in AI & ML provided me with hands-on experience that I couldn't get in college. The mentors were supportive, and the dashboard made tracking my progress so easy."
+                  "{student.quote}"
                 </p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-slate-200"></div>
+                  <img src={student.avatar} alt={student.name} className="w-12 h-12 rounded-full bg-slate-200 object-cover" />
                   <div>
-                    <p className="font-black text-slate-900 dark:text-white">Ahmad Khan</p>
-                    <p className="text-xs font-bold text-slate-500 uppercase">Web Dev Intern @ Teyzix</p>
+                    <p className="font-black text-slate-900 dark:text-white">{student.name}</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase">{student.role}</p>
                   </div>
                 </div>
               </div>
