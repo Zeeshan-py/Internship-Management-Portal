@@ -30,7 +30,12 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const response = await api.get('/applications/all');
-      setApplications(response.data.data);
+      if (response.data && Array.isArray(response.data.data)) {
+        setApplications(response.data.data);
+      } else {
+        console.error('Unexpected response format:', response.data);
+        setError('Received invalid data format from server.');
+      }
       setError(null);
     } catch (err) {
       setError('Failed to fetch applications. Please ensure the backend is running.');
