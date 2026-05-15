@@ -74,8 +74,9 @@ export const getApplications = async (req, res, next) => {
 export const adminLogin = async (req, res, next) => {
   try {
     const { password } = req.body;
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
     
-    if (password === process.env.ADMIN_PASSWORD) {
+    if (password === adminPass) {
       res.status(200).json({ success: true, message: 'Logged in successfully' });
     } else {
       res.status(401).json({ success: false, message: 'Invalid password' });
