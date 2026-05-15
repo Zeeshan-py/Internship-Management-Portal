@@ -19,6 +19,7 @@ app.use(morgan('dev')); // Log requests to the console
 app.use(express.json()); // Body parser to read JSON data from requests
 
 // API Routes
+app.get('/', (req, res) => res.send('🚀 TEYZIX CORE API is running!'));
 app.get('/ping', (req, res) => res.send('pong'));
 app.use('/api/applications', applicationRoutes);
 
