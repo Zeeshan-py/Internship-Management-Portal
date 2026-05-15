@@ -1,86 +1,162 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Rocket } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Menu, 
+  X, 
+  Sun, 
+  Moon, 
+  LayoutDashboard, 
+  Briefcase, 
+  Mail, 
+  User,
+  Bell,
+  ChevronDown
+} from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Internships', path: '/internships' },
     { name: 'Contact', path: '/contact' },
-    { name: 'Admin', path: '/admin' },
   ];
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
+    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-white/80 dark:bg-slate-950/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800 py-3' 
+        : 'bg-transparent py-5'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-500 transition-colors">
-              <Rocket className="text-white w-6 h-6" />
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-600/30 group-hover:scale-105 transition-transform">
+              T
             </div>
-            <span className="text-2xl font-bold text-white tracking-tighter">
-              TEYZIX<span className="text-blue-500 font-black">CORE</span>
-            </span>
+            <div className="hidden sm:block">
+              <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">TEYZIX</span>
+              <span className="text-xl font-light text-blue-600">CORE</span>
+            </div>
           </Link>
 
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className="text-slate-300 hover:text-white font-medium transition-colors"
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            <div className="flex items-center gap-6">
+              {navLinks.map((link) => (
+                <Link 
+                  key={link.name} 
+                  to={link.path}
+                  className={`text-sm font-bold transition-colors ${
+                    location.pathname === link.path 
+                      ? 'text-blue-600 dark:text-blue-400' 
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800"></div>
+
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all"
               >
-                {link.name}
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              
+              <Link 
+                to="/admin" 
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+              >
+                <LayoutDashboard size={18} />
+                Admin
               </Link>
-            ))}
-            <Link
-              to="/internships"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
-            >
-              Apply Now
-            </Link>
+
+              <Link to="/internships" className="btn-primary py-2 px-5 text-sm">
+                Apply Now
+              </Link>
+            </div>
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-slate-300 hover:text-white p-2"
+          {/* Mobile Menu Toggle */}
+          <div className="md:hidden flex items-center gap-4">
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2 text-slate-600 dark:text-slate-400"
             >
-              {isOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-900 dark:text-white">
+              {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-slate-950 border-b border-white/10 animate-in slide-in-from-top duration-300">
-          <div className="px-2 pt-2 pb-6 space-y-1 sm:px-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                onClick={() => setIsOpen(false)}
-                className="block px-3 py-4 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-900 rounded-md"
-              >
-                {link.name}
-              </Link>
-            ))}
-            <Link
-              to="/internships"
-              onClick={() => setIsOpen(false)}
-              className="block w-full text-center bg-blue-600 text-white px-3 py-4 rounded-md font-bold"
-            >
-              Apply Now
-            </Link>
-          </div>
-        </div>
-      )}
+      {/* Mobile Navigation Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 overflow-hidden"
+          >
+            <div className="px-4 pt-2 pb-6 space-y-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className="block text-lg font-bold text-slate-900 dark:text-white py-2 border-b border-slate-50 dark:border-slate-900"
+                >
+                  {link.name}
+                </Link>
+              ))}
+              <div className="flex flex-col gap-4 pt-4">
+                <Link 
+                  to="/admin" 
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center gap-2 py-4 bg-slate-100 dark:bg-slate-900 rounded-xl font-bold"
+                >
+                  <LayoutDashboard size={20} />
+                  Admin Dashboard
+                </Link>
+                <Link 
+                  to="/internships" 
+                  onClick={() => setIsOpen(false)}
+                  className="btn-primary py-4"
+                >
+                  View All Internships
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
