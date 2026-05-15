@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, 
   CheckCircle2, 
@@ -21,6 +21,8 @@ import {
 import { Link } from 'react-router-dom';
 
 const Home = () => {
+  const [openFaq, setOpenFaq] = useState(null);
+
   const categories = [
     { name: 'Web Development', icon: <Code2 />, count: '24 Openings', color: 'bg-blue-500' },
     { name: 'AI & Machine Learning', icon: <Cpu />, count: '12 Openings', color: 'bg-purple-500' },
@@ -43,6 +45,10 @@ const Home = () => {
     { title: 'Interview', desc: 'Technical and cultural assessment with industry experts.', step: '03' },
     { title: 'Onboarding', desc: 'Get matched with a mentor and start your journey.', step: '04' },
   ];
+
+  const toggleFaq = (idx) => {
+    setOpenFaq(openFaq === idx ? null : idx);
+  };
 
   return (
     <div className="bg-white dark:bg-slate-950 transition-colors duration-300">
@@ -338,11 +344,28 @@ const Home = () => {
               { q: 'Is there a stipend involved?', a: 'Most of our internships are paid. Specific stipend amounts are listed on each internship card.' },
               { q: 'Will I get a certificate?', a: 'Yes, every successful internship completion is rewarded with a verified professional certificate.' },
             ].map((faq, idx) => (
-              <div key={idx} className="card-premium cursor-pointer group">
+              <div key={idx} className="card-premium cursor-pointer group" onClick={() => toggleFaq(idx)}>
                 <div className="flex justify-between items-center">
                   <h4 className="font-black text-slate-900 dark:text-white">{faq.q}</h4>
-                  <ChevronDown className="text-slate-400 group-hover:text-blue-600 transition-colors" />
+                  <motion.div animate={{ rotate: openFaq === idx ? 180 : 0 }}>
+                    <ChevronDown className={`transition-colors ${openFaq === idx ? 'text-blue-600' : 'text-slate-400 group-hover:text-blue-600'}`} />
+                  </motion.div>
                 </div>
+                <AnimatePresence>
+                  {openFaq === idx && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="pt-4 text-slate-500 dark:text-slate-400 font-medium leading-relaxed border-t border-slate-100 dark:border-slate-800 mt-4">
+                        {faq.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
           </div>
