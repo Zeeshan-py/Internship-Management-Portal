@@ -25,6 +25,8 @@ const AdminDashboard = () => {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
+  const [selectedApplication, setSelectedApplication] = useState(null);
+
   useEffect(() => {
     if (isLoggedIn) {
       fetchApplications();
@@ -233,13 +235,80 @@ const AdminDashboard = () => {
                     <CheckCircle className="w-4 h-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">Verified Application</span>
                   </div>
-                  <button className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-bold group/btn">
+                  <button 
+                    onClick={() => setSelectedApplication(app)}
+                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-bold group/btn"
+                  >
                     View Details
                     <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </motion.div>
             ))}
+          </div>
+        )}
+
+        {/* Details Modal */}
+        {selectedApplication && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl"
+            >
+              <div className="p-8 md:p-10">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <span className="px-4 py-1.5 bg-blue-600/10 text-blue-400 text-xs font-black uppercase rounded-full border border-blue-600/20 mb-4 inline-block">
+                      {selectedApplication.domain}
+                    </span>
+                    <h2 className="text-4xl font-black text-white">{selectedApplication.name}</h2>
+                    <p className="text-slate-400 mt-1">Applied on {new Date(selectedApplication.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedApplication(null)}
+                    className="p-2 bg-white/5 hover:bg-white/10 rounded-full transition-all"
+                  >
+                    <XCircle className="w-6 h-6 text-slate-400" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Email Address</p>
+                    <p className="text-white font-bold flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-blue-600" />
+                      {selectedApplication.email}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Phone Number</p>
+                    <p className="text-white font-bold flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-blue-600" />
+                      {selectedApplication.phone}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Cover Letter / Message</p>
+                  <div className="bg-slate-950/50 border border-white/5 p-6 rounded-2xl">
+                    <p className="text-slate-300 leading-relaxed italic whitespace-pre-wrap">
+                      "{selectedApplication.message}"
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-10 pt-8 border-t border-white/5 flex gap-4">
+                  <button 
+                    onClick={() => setSelectedApplication(null)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black transition-all active:scale-95"
+                  >
+                    Close Details
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
         )}
       </div>
