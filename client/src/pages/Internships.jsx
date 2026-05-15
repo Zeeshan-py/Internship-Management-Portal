@@ -19,6 +19,8 @@ import { Link } from 'react-router-dom';
 const Internships = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 2; // Low number to demonstrate pagination easily
 
   const internships = [
     {
@@ -84,6 +86,17 @@ const Internships = () => {
     return matchesSearch && matchesCategory;
   });
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredInternships.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredInternships.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4">
@@ -113,7 +126,10 @@ const Internships = () => {
                       type="text" 
                       placeholder="Title, company..." 
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1); // Reset to page 1 on search
+                      }}
                       className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-12 pr-4 py-3 text-sm focus:border-blue-600 outline-none transition-all"
                     />
                   </div>
@@ -126,7 +142,10 @@ const Internships = () => {
                     {categories.map(cat => (
                       <button
                         key={cat}
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() => {
+                          setSelectedCategory(cat);
+                          setCurrentPage(1); // Reset to page 1 on category change
+                        }}
                         className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
                           selectedCategory === cat 
                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' 
@@ -169,7 +188,7 @@ const Internships = () => {
           <main className="flex-1 space-y-6">
             <div className="flex justify-between items-center mb-4">
               <p className="text-sm font-bold text-slate-500">
-                Showing <span className="text-slate-900 dark:text-white font-black">{filteredInternships.length}</span> results
+                Showing <span className="text-slate-900 dark:text-white font-black">{currentItems.length}</span> of <span className="text-slate-900 dark:text-white font-black">{filteredInternships.length}</span> results
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Sort By:</span>
@@ -181,92 +200,104 @@ const Internships = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-              {filteredInternships.map((intern) => (
-                <motion.div
-                  key={intern.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="card-premium group"
-                >
-                  <div className="flex flex-col md:flex-row justify-between gap-6">
-                    <div className="flex gap-6">
-                      <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-slate-400">
-                        <Briefcase size={28} />
+              {currentItems.length > 0 ? (
+                currentItems.map((intern) => (
+                  <motion.div
+                    key={intern.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="card-premium group"
+                  >
+                    <div className="flex flex-col md:flex-row justify-between gap-6">
+                      <div className="flex gap-6">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-slate-400">
+                          <Briefcase size={28} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="badge badge-blue">{intern.category}</span>
+                            <span className="badge badge-amber">{intern.type}</span>
+                          </div>
+                          <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">
+                            {intern.title}
+                          </h3>
+                          <p className="font-bold text-slate-500 mb-4">{intern.company}</p>
+                          
+                          <div className="flex flex-wrap gap-6 items-center">
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
+                              <MapPin size={16} className="text-blue-600" />
+                              {intern.location}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
+                              <Clock size={16} className="text-blue-600" />
+                              {intern.duration}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
+                              <DollarSign size={16} className="text-blue-600" />
+                              {intern.stipend}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
+                              <Calendar size={16} className="text-blue-600" />
+                              Deadline: {intern.deadline}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="badge badge-blue">{intern.category}</span>
-                          <span className="badge badge-amber">{intern.type}</span>
+                      <div className="flex flex-col md:items-end justify-between gap-4">
+                        <div className="flex gap-2">
+                          <button className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:text-blue-600 transition-all">
+                            <Bookmark size={20} />
+                          </button>
+                          <button className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:text-blue-600 transition-all">
+                            <Share2 size={20} />
+                          </button>
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">
-                          {intern.title}
-                        </h3>
-                        <p className="font-bold text-slate-500 mb-4">{intern.company}</p>
-                        
-                        <div className="flex flex-wrap gap-6 items-center">
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
-                            <MapPin size={16} className="text-blue-600" />
-                            {intern.location}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
-                            <Clock size={16} className="text-blue-600" />
-                            {intern.duration}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
-                            <DollarSign size={16} className="text-blue-600" />
-                            {intern.stipend}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400">
-                            <Calendar size={16} className="text-blue-600" />
-                            Deadline: {intern.deadline}
-                          </div>
-                        </div>
+                        <Link 
+                          to={`/apply?domain=${intern.category}`}
+                          className="btn-primary w-full md:w-auto px-8"
+                        >
+                          Apply Now
+                          <ArrowRight size={18} />
+                        </Link>
                       </div>
                     </div>
-                    <div className="flex flex-col md:items-end justify-between gap-4">
-                      <div className="flex gap-2">
-                        <button className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:text-blue-600 transition-all">
-                          <Bookmark size={20} />
-                        </button>
-                        <button className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:text-blue-600 transition-all">
-                          <Share2 size={20} />
-                        </button>
-                      </div>
-                      <Link 
-                        to={`/apply?domain=${intern.category}`}
-                        className="btn-primary w-full md:w-auto px-8"
-                      >
-                        Apply Now
-                        <ArrowRight size={18} />
-                      </Link>
-                    </div>
-                  </div>
-                  
-                  {/* Skill Tags */}
-                  <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/50 flex flex-wrap gap-2">
-                    {intern.skills.map(skill => (
-                      <span key={skill} className="px-3 py-1 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-black rounded-lg">
-                        {skill}
+                    
+                    {/* Skill Tags */}
+                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/50 flex flex-wrap gap-2">
+                      {intern.skills.map(skill => (
+                        <span key={skill} className="px-3 py-1 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-black rounded-lg">
+                          {skill}
+                        </span>
+                      ))}
+                      <span className="ml-auto text-xs font-black text-emerald-500 uppercase">
+                        {intern.positions} Open Positions
                       </span>
-                    ))}
-                    <span className="ml-auto text-xs font-black text-emerald-500 uppercase">
-                      {intern.positions} Open Positions
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+                  <p className="text-slate-500 font-bold">No internships found matching your criteria.</p>
+                </div>
+              )}
             </div>
 
-            {/* Pagination Placeholder */}
-            <div className="flex justify-center pt-8">
-              <div className="flex gap-2">
-                {[1, 2, 3].map(p => (
-                  <button key={p} className={`w-10 h-10 rounded-xl font-black text-sm flex items-center justify-center transition-all ${p === 1 ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
-                    {p}
-                  </button>
-                ))}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center pt-8">
+                <div className="flex gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <button 
+                      key={p} 
+                      onClick={() => handlePageChange(p)}
+                      className={`w-10 h-10 rounded-xl font-black text-sm flex items-center justify-center transition-all ${currentPage === p ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </main>
         </div>
       </div>
