@@ -21,7 +21,14 @@ import {
   Download,
   Eye,
   TrendingUp,
-  Clock
+  Clock,
+  Plus,
+  Shield,
+  User,
+  Globe,
+  Lock,
+  Trash2,
+  Edit
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import api from '../services/api';
@@ -98,11 +105,6 @@ const AdminDashboard = () => {
     const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          app.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterDomain === 'All' || app.domain === filterDomain;
-    
-    // Tab filtering
-    if (activeTab === 'Applications') return matchesSearch && matchesFilter;
-    if (activeTab === 'Internships') return matchesSearch && matchesFilter; // Could add more specific logic here
-    
     return matchesSearch && matchesFilter;
   });
 
@@ -179,7 +181,7 @@ const AdminDashboard = () => {
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
           <div>
             <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{activeTab}</h1>
-            <p className="text-slate-500 font-medium">Monitoring all active internship applications</p>
+            <p className="text-slate-500 font-medium">Monitoring all active internship operations</p>
           </div>
           <div className="flex items-center gap-4">
             <button className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 relative">
@@ -187,7 +189,7 @@ const AdminDashboard = () => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
-              <div className="w-10 h-10 bg-slate-200 rounded-full"></div>
+              <div className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center font-black rounded-full">A</div>
               <div className="hidden sm:block">
                 <p className="text-sm font-black text-slate-900 dark:text-white leading-none">Admin User</p>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Super Admin</p>
@@ -196,9 +198,8 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        {activeTab === 'Overview' || activeTab === 'Applications' ? (
+        {activeTab === 'Overview' && (
           <>
-            {/* Analytics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {stats.map((stat, idx) => (
                 <div key={idx} className="card-premium">
@@ -213,91 +214,46 @@ const AdminDashboard = () => {
                 </div>
               ))}
             </div>
-
-            {/* Applications Table Section */}
-            <div className="card-premium !p-0 overflow-hidden">
-              <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                  {activeTab === 'Overview' ? 'Recent Applications' : 'All Applications'}
-                </h3>
-                <div className="flex w-full md:w-auto gap-4">
-                  <div className="relative flex-1 md:w-64">
-                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Search applicants..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-blue-600 transition-all" />
-                  </div>
-                  <button className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500">
-                    <Download size={18} />
-                  </button>
-                </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <ApplicationsList 
+                  loading={loading} 
+                  filteredApplications={filteredApplications} 
+                  setSelectedApplication={setSelectedApplication} 
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                />
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left min-w-[800px]">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900/50">
-                      <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Applicant</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Domain</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {loading ? (
-                      <tr>
-                        <td colSpan="5" className="px-8 py-12 text-center">
-                          <Loader className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-                        </td>
-                      </tr>
-                    ) : filteredApplications.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" className="px-8 py-12 text-center font-bold text-slate-400">No applications found.</td>
-                      </tr>
-                    ) : (
-                      filteredApplications.map((app) => (
-                        <tr key={app._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="px-8 py-5">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center font-bold uppercase">{app.name.charAt(0)}</div>
-                              <div>
-                                <p className="font-black text-slate-900 dark:text-white">{app.name}</p>
-                                <p className="text-xs font-bold text-slate-500">{app.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-8 py-5">
-                            <span className="badge badge-blue">{app.domain}</span>
-                          </td>
-                          <td className="px-8 py-5">
-                            <span className={`badge flex items-center gap-1 w-fit ${app.status === 'Approved' ? 'badge-green' : app.status === 'Rejected' ? 'badge-red' : 'badge-amber'}`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${app.status === 'Approved' ? 'bg-emerald-600' : app.status === 'Rejected' ? 'bg-red-600' : 'bg-amber-600'}`}></div>
-                              {app.status || 'Pending Review'}
-                            </span>
-                          </td>
-                          <td className="px-8 py-5 text-sm font-bold text-slate-600 dark:text-slate-400">
-                            {new Date(app.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-8 py-5">
-                            <button onClick={() => setSelectedApplication(app)} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:text-blue-600 transition-all">
-                              <Eye size={18} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <div className="space-y-8">
+                <RecentNotifications />
+                <QuickActions />
               </div>
             </div>
           </>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-24 h-24 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-400 mb-6">
-              <Settings size={48} />
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">{activeTab} View</h3>
-            <p className="text-slate-500 max-w-sm">The {activeTab} module is currently under development to bring you the best administrative experience.</p>
-          </div>
+        )}
+
+        {activeTab === 'Applications' && (
+          <ApplicationsList 
+            loading={loading} 
+            filteredApplications={filteredApplications} 
+            setSelectedApplication={setSelectedApplication} 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isFullView={true}
+          />
+        )}
+
+        {activeTab === 'Internships' && (
+          <InternshipsManagement />
+        )}
+
+        {activeTab === 'Notifications' && (
+          <NotificationsFullView />
+        )}
+
+        {activeTab === 'Settings' && (
+          <AdminSettings />
         )}
 
         {/* Details Modal */}
@@ -364,5 +320,283 @@ const AdminDashboard = () => {
     </div>
   );
 };
+
+/* --- Sub-components for Admin Modules --- */
+
+const ApplicationsList = ({ loading, filteredApplications, setSelectedApplication, searchTerm, setSearchTerm, isFullView = false }) => (
+  <div className="card-premium !p-0 overflow-hidden">
+    <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <h3 className="text-xl font-black text-slate-900 dark:text-white">
+        {isFullView ? 'Master Application Database' : 'Recent Submissions'}
+      </h3>
+      <div className="flex w-full md:w-auto gap-4">
+        <div className="relative flex-1 md:w-64">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="text" placeholder="Search applicants..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-blue-600 transition-all" />
+        </div>
+        <button className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-blue-600 transition-all">
+          <Download size={18} />
+        </button>
+      </div>
+    </div>
+
+    <div className="overflow-x-auto">
+      <table className="w-full text-left min-w-[800px]">
+        <thead>
+          <tr className="bg-slate-50 dark:bg-slate-900/50">
+            <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Applicant</th>
+            <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Domain</th>
+            <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
+            <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+            <th className="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Action</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          {loading ? (
+            <tr>
+              <td colSpan="5" className="px-8 py-12 text-center">
+                <Loader className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
+              </td>
+            </tr>
+          ) : filteredApplications.length === 0 ? (
+            <tr>
+              <td colSpan="5" className="px-8 py-12 text-center font-bold text-slate-400">No applications found.</td>
+            </tr>
+          ) : (
+            filteredApplications.map((app) => (
+              <tr key={app._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                <td className="px-8 py-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-600/10 text-blue-600 rounded-full flex items-center justify-center font-bold uppercase">{app.name.charAt(0)}</div>
+                    <div>
+                      <p className="font-black text-slate-900 dark:text-white">{app.name}</p>
+                      <p className="text-xs font-bold text-slate-500">{app.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-8 py-5">
+                  <span className="badge badge-blue">{app.domain}</span>
+                </td>
+                <td className="px-8 py-5">
+                  <span className={`badge flex items-center gap-1 w-fit ${app.status === 'Approved' ? 'badge-green' : app.status === 'Rejected' ? 'badge-red' : 'badge-amber'}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${app.status === 'Approved' ? 'bg-emerald-600' : app.status === 'Rejected' ? 'bg-red-600' : 'bg-amber-600'}`}></div>
+                    {app.status || 'Pending Review'}
+                  </span>
+                </td>
+                <td className="px-8 py-5 text-sm font-bold text-slate-600 dark:text-slate-400">
+                  {new Date(app.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-8 py-5">
+                  <button onClick={() => setSelectedApplication(app)} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg hover:text-blue-600 transition-all">
+                    <Eye size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+const InternshipsManagement = () => (
+  <div className="space-y-8">
+    <div className="flex justify-between items-center">
+      <h3 className="text-xl font-black text-slate-900 dark:text-white">Active Postings</h3>
+      <button className="btn-primary !py-2.5 px-6 rounded-xl text-sm">
+        <Plus size={18} />
+        Post Internship
+      </button>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {[
+        { title: 'Web Development Intern', applicants: 42, status: 'Active', date: '2 days ago' },
+        { title: 'AI Research Assistant', applicants: 18, status: 'Active', date: '5 days ago' },
+        { title: 'UI/UX Design Intern', applicants: 29, status: 'Active', date: '1 week ago' },
+        { title: 'Cybersecurity Analyst', applicants: 12, status: 'Paused', date: '2 weeks ago' },
+      ].map((job, i) => (
+        <div key={i} className="card-premium group">
+          <div className="flex justify-between mb-4">
+            <div className="w-12 h-12 bg-blue-600/10 text-blue-600 rounded-xl flex items-center justify-center">
+              <Briefcase size={24} />
+            </div>
+            <div className="flex gap-2">
+              <button className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Edit size={16} /></button>
+              <button className="p-2 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+            </div>
+          </div>
+          <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">{job.title}</h4>
+          <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-6">
+            <span className="flex items-center gap-1"><Users size={12} /> {job.applicants} Applicants</span>
+            <span className="flex items-center gap-1"><Clock size={12} /> {job.date}</span>
+          </div>
+          <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+            <span className={`badge ${job.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>{job.status}</span>
+            <button className="text-sm font-black text-blue-600 hover:underline">View Analytics</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const RecentNotifications = () => (
+  <div className="card-premium">
+    <div className="flex justify-between items-center mb-6">
+      <h3 className="text-lg font-black text-slate-900 dark:text-white">Recent Alerts</h3>
+      <button className="text-xs font-black text-blue-600 uppercase tracking-widest">Clear All</button>
+    </div>
+    <div className="space-y-4">
+      {[
+        { text: 'New application received for Web Dev', time: '2 mins ago', icon: <Users size={14} />, bg: 'bg-blue-50 text-blue-600' },
+        { text: 'System backup completed successfully', time: '1 hour ago', icon: <Shield size={14} />, bg: 'bg-emerald-50 text-emerald-600' },
+        { text: 'Database storage is 85% full', time: '3 hours ago', icon: <Bell size={14} />, bg: 'bg-amber-50 text-amber-600' },
+      ].map((note, i) => (
+        <div key={i} className="flex gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+          <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${note.bg}`}>
+            {note.icon}
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{note.text}</p>
+            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">{note.time}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const QuickActions = () => (
+  <div className="card-premium bg-slate-900 !border-0 text-white overflow-hidden relative">
+    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 rounded-bl-full"></div>
+    <h3 className="text-lg font-black mb-6 relative z-10">System Status</h3>
+    <div className="space-y-4 relative z-10">
+      <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+          <span className="text-sm font-bold">Server Cluster</span>
+        </div>
+        <span className="text-xs font-black text-emerald-500">OPTIMAL</span>
+      </div>
+      <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+          <span className="text-sm font-bold">API Gateway</span>
+        </div>
+        <span className="text-xs font-black text-emerald-500">12ms LATENCY</span>
+      </div>
+    </div>
+    <button className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2">
+      <Shield size={16} />
+      Security Scan
+    </button>
+  </div>
+);
+
+const NotificationsFullView = () => (
+  <div className="card-premium">
+    <div className="flex justify-between items-center mb-8">
+      <h3 className="text-xl font-black text-slate-900 dark:text-white">All Notifications</h3>
+      <div className="flex gap-2">
+        <button className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-black">All</button>
+        <button className="px-4 py-2 text-slate-500 text-xs font-black">Unread</button>
+        <button className="px-4 py-2 text-slate-500 text-xs font-black">System</button>
+      </div>
+    </div>
+    <div className="space-y-2">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className={`p-4 rounded-2xl flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer ${i < 3 ? 'border-l-4 border-blue-600 bg-blue-50/50 dark:bg-blue-600/5' : ''}`}>
+          <div className="flex gap-4 items-center">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${i % 2 === 0 ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
+              {i % 2 === 0 ? <Users size={18} /> : <Briefcase size={18} />}
+            </div>
+            <div>
+              <p className="font-black text-slate-900 dark:text-white">System Notification #{i + 1024}</p>
+              <p className="text-xs font-bold text-slate-500">A new action was performed on the administrative console.</p>
+            </div>
+          </div>
+          <span className="text-xs font-bold text-slate-400">12:4{i} PM</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const AdminSettings = () => (
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="lg:col-span-2 space-y-8">
+      <div className="card-premium">
+        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8">Account Profile</h3>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Full Name</label>
+            <input type="text" defaultValue="Admin User" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Email Address</label>
+            <input type="email" defaultValue="admin@teyzix.core" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none" />
+          </div>
+          <div className="col-span-2 space-y-2">
+            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Bio</label>
+            <textarea rows="4" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none resize-none">Managing the platform infrastructure and student onboarding processes.</textarea>
+          </div>
+        </div>
+        <div className="mt-8 flex justify-end">
+          <button className="btn-primary !py-2.5 px-8 text-sm">Save Changes</button>
+        </div>
+      </div>
+
+      <div className="card-premium">
+        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8">Security & Privacy</h3>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-600/10 text-blue-600 rounded-xl"><Lock size={20} /></div>
+              <div>
+                <p className="font-black text-slate-900 dark:text-white">Two-Factor Authentication</p>
+                <p className="text-xs font-bold text-slate-500">Add an extra layer of security to your account.</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black">Enable</button>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-600/10 text-purple-600 rounded-xl"><Globe size={20} /></div>
+              <div>
+                <p className="font-black text-slate-900 dark:text-white">Public API Access</p>
+                <p className="text-xs font-bold text-slate-500">Generate keys for external system integrations.</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-xs font-black">Manage</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="space-y-8">
+      <div className="card-premium flex flex-col items-center text-center">
+        <div className="w-24 h-24 bg-blue-600 text-white flex items-center justify-center font-black text-4xl rounded-3xl shadow-xl shadow-blue-600/20 mb-6">A</div>
+        <h4 className="text-xl font-black text-slate-900 dark:text-white">Admin User</h4>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Super Administrator</p>
+        <div className="w-full h-[1px] bg-slate-100 dark:bg-slate-800 my-6"></div>
+        <div className="w-full space-y-4">
+          <div className="flex justify-between text-sm">
+            <span className="font-bold text-slate-400">Status</span>
+            <span className="font-black text-emerald-500">Active Now</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="font-bold text-slate-400">Last Login</span>
+            <span className="font-black text-slate-900 dark:text-white">10:42 AM</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="font-bold text-slate-400">Permissions</span>
+            <span className="font-black text-slate-900 dark:text-white">Owner</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export default AdminDashboard;
