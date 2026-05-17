@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -7,17 +7,18 @@ import {
   Sun, 
   Moon, 
   LayoutDashboard, 
-  Briefcase, 
-  Mail, 
-  User,
-  Bell,
-  ChevronDown
 } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('teyzix-theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const location = useLocation();
 
   useEffect(() => {
@@ -32,6 +33,7 @@ const Navbar = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('teyzix-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
   const navLinks = [
@@ -95,7 +97,7 @@ const Navbar = () => {
                 Admin
               </Link>
 
-              <Link to="/internships" className="btn-primary py-2 px-5 text-sm">
+              <Link to="/apply" className="btn-primary py-2 px-5 text-sm">
                 Apply Now
               </Link>
             </div>
@@ -146,11 +148,11 @@ const Navbar = () => {
                   Admin Dashboard
                 </Link>
                 <Link 
-                  to="/internships" 
+                  to="/apply" 
                   onClick={() => setIsOpen(false)}
                   className="btn-primary py-4"
                 >
-                  View All Internships
+                  Apply Now
                 </Link>
               </div>
             </div>

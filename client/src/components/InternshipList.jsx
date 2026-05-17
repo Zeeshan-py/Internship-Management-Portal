@@ -1,4 +1,3 @@
-import React from 'react';
 import InternshipCard from './InternshipCard';
 import { Layout, Brain, Palette, ShieldCheck, Smartphone } from 'lucide-react';
 

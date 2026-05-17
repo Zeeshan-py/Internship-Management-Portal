@@ -1,6 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { Github, Twitter, Linkedin, Mail, MapPin, Phone, Instagram, ArrowRight } from 'lucide-react';
+import { Github, Twitter, Linkedin, Mail, MapPin, Phone, Instagram } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -10,27 +9,27 @@ const Footer = () => {
       title: 'Platform',
       links: [
         { name: 'Internships', path: '/internships' },
-        { name: 'Mentorship', path: '#' },
-        { name: 'For Recruiters', path: '#' },
-        { name: 'Pricing', path: '#' },
+        { name: 'Mentorship', path: '/contact' },
+        { name: 'For Recruiters', path: '/contact' },
+        { name: 'Pricing', path: '/contact' },
       ],
     },
     {
       title: 'Company',
       links: [
-        { name: 'About Us', path: '#' },
-        { name: 'Our Team', path: '#' },
-        { name: 'Careers', path: '#' },
-        { name: 'News & Blog', path: '#' },
+        { name: 'About Us', path: '/' },
+        { name: 'Our Team', path: '/contact' },
+        { name: 'Careers', path: '/internships' },
+        { name: 'News & Blog', path: '/contact' },
       ],
     },
     {
       title: 'Support',
       links: [
-        { name: 'Help Center', path: '#' },
-        { name: 'FAQs', path: '#' },
+        { name: 'Help Center', path: '/contact' },
+        { name: 'FAQs', path: '/' },
         { name: 'Contact Us', path: '/contact' },
-        { name: 'Security', path: '#' },
+        { name: 'Security', path: '/contact' },
       ],
     },
   ];
@@ -39,7 +38,6 @@ const Footer = () => {
     <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-900 pt-20 pb-10 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
-          {/* Brand Section */}
           <div className="space-y-6">
             <div className="flex items-center gap-2 group">
               <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-600/30">
@@ -52,14 +50,13 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-4">
               {[Twitter, Github, Linkedin, Instagram].map((Icon, idx) => (
-                <a key={idx} href="#" className="p-2.5 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-300">
+                <a key={idx} href="https://www.linkedin.com" target="_blank" rel="noreferrer" className="p-2.5 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-300">
                   <Icon size={18} />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Quick Links */}
           {footerLinks.map((section) => (
             <div key={section.title} className="space-y-6">
               <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{section.title}</h4>
@@ -75,7 +72,6 @@ const Footer = () => {
             </div>
           ))}
 
-          {/* Contact Section */}
           <div className="space-y-6">
             <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Connect</h4>
             <div className="space-y-4">
@@ -100,9 +96,9 @@ const Footer = () => {
             © {currentYear} TEYZIX CORE. All rights reserved.
           </p>
           <div className="flex gap-8">
-            <a href="#" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Privacy Policy</a>
-            <a href="#" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Terms of Service</a>
-            <a href="#" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Cookie Policy</a>
+            <Link to="/contact" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Privacy Policy</Link>
+            <Link to="/contact" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Terms of Service</Link>
+            <Link to="/contact" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </div>

@@ -19,7 +19,7 @@ const applicationSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a phone number'],
       match: [
-        /^[0-9]{10,15}$/,
+        /^\+?[0-9][0-9\s().-]{8,20}$/,
         'Please add a valid phone number',
       ],
     },
@@ -30,6 +30,23 @@ const applicationSchema = new mongoose.Schema(
     message: {
       type: String,
       required: [true, 'Please add a message'],
+    },
+    experience: {
+      type: String,
+      default: 'Fresher',
+      trim: true,
+    },
+    education: {
+      type: String,
+      trim: true,
+    },
+    skills: {
+      type: String,
+      trim: true,
+    },
+    resumeUrl: {
+      type: String,
+      trim: true,
     },
     status: {
       type: String,

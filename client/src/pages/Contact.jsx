@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageCircle, Globe, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Globe, CheckCircle2 } from 'lucide-react';
 
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);

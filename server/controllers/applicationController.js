@@ -6,7 +6,7 @@ import { Resend } from 'resend';
 // @access  Public
 export const createApplication = async (req, res, next) => {
   try {
-    const { name, email, phone, domain, message } = req.body;
+    const { name, email, phone, domain, message, experience, education, skills, resumeUrl } = req.body;
 
     // Manual check for fields (Mongoose also does this, but this is for custom handling)
     if (!name || !email || !phone || !domain || !message) {
@@ -21,6 +21,10 @@ export const createApplication = async (req, res, next) => {
       phone,
       domain,
       message,
+      experience,
+      education,
+      skills,
+      resumeUrl,
     });
 
     // Send Confirmation Email using Resend (Non-blocking)
@@ -38,6 +42,10 @@ export const createApplication = async (req, res, next) => {
           <p><strong>Name:</strong> ${name}</p>
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Experience:</strong> ${experience || 'Not provided'}</p>
+          <p><strong>Education:</strong> ${education || 'Not provided'}</p>
+          <p><strong>Skills:</strong> ${skills || 'Not provided'}</p>
+          <p><strong>Resume:</strong> ${resumeUrl || 'Not provided'}</p>
           <p><strong>Message:</strong> ${message}</p>
         </div>
       `

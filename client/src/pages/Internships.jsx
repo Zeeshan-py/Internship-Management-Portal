@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, 
@@ -11,80 +11,102 @@ import {
   Bookmark,
   Share2,
   Calendar,
-  X,
   ChevronDown
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+
+const INTERNSHIPS = [
+  {
+    id: 1,
+    title: 'Senior Web Development Intern',
+    company: 'Teyzix Core',
+    location: 'Remote',
+    duration: '3 Months',
+    stipend: '$500 - $800',
+    category: 'Web Development',
+    skills: ['React', 'Node.js', 'Tailwind CSS'],
+    positions: 5,
+    deadline: '2026-06-15',
+    type: 'Full-time',
+  },
+  {
+    id: 2,
+    title: 'AI & Machine Learning Engineer',
+    company: 'DataFlow Systems',
+    location: 'Hybrid',
+    duration: '6 Months',
+    stipend: '$700 - $1000',
+    category: 'AI & Machine Learning',
+    skills: ['Python', 'TensorFlow', 'NLP'],
+    positions: 3,
+    deadline: '2026-06-10',
+    type: 'Part-time',
+  },
+  {
+    id: 3,
+    title: 'UI/UX Product Designer',
+    company: 'Creative Studio',
+    location: 'Remote',
+    duration: '4 Months',
+    stipend: '$400 - $600',
+    category: 'UI/UX Design',
+    skills: ['Figma', 'Framer', 'Prototyping'],
+    positions: 2,
+    deadline: '2026-06-20',
+    type: 'Contract',
+  },
+  {
+    id: 4,
+    title: 'Cybersecurity Analyst',
+    company: 'SecureNet Inc',
+    location: 'On-site',
+    duration: '3 Months',
+    stipend: '$600 - $900',
+    category: 'Cybersecurity',
+    skills: ['Network Security', 'Pen Testing', 'Ethical Hacking'],
+    positions: 4,
+    deadline: '2026-07-01',
+    type: 'Full-time',
+  },
+];
+
+const CATEGORIES = ['All', 'Web Development', 'AI & Machine Learning', 'UI/UX Design', 'Cybersecurity', 'Cloud Computing', 'Mobile App Development'];
+const JOB_TYPES = ['All', 'Full-time', 'Part-time', 'Remote', 'On-site'];
 
 const Internships = () => {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    const category = new URLSearchParams(location.search).get('category');
+    return category && CATEGORIES.includes(category) ? category : 'All';
+  });
+  const [selectedType, setSelectedType] = useState('All');
+  const [sortOrder, setSortOrder] = useState('Newest First');
   const [currentPage, setCurrentPage] = useState(1);
+  const [savedIds, setSavedIds] = useState(() => new Set());
+  const [feedback, setFeedback] = useState('');
   const itemsPerPage = 2; // Low number to demonstrate pagination easily
 
-  const internships = [
-    {
-      id: 1,
-      title: 'Senior Web Development Intern',
-      company: 'Teyzix Core',
-      location: 'Remote',
-      duration: '3 Months',
-      stipend: '$500 - $800',
-      category: 'Web Development',
-      skills: ['React', 'Node.js', 'Tailwind CSS'],
-      positions: 5,
-      deadline: '2026-06-15',
-      type: 'Full-time',
-    },
-    {
-      id: 2,
-      title: 'AI & Machine Learning Engineer',
-      company: 'DataFlow Systems',
-      location: 'Hybrid',
-      duration: '6 Months',
-      stipend: '$700 - $1000',
-      category: 'AI & Machine Learning',
-      skills: ['Python', 'TensorFlow', 'NLP'],
-      positions: 3,
-      deadline: '2026-06-10',
-      type: 'Part-time',
-    },
-    {
-      id: 3,
-      title: 'UI/UX Product Designer',
-      company: 'Creative Studio',
-      location: 'Remote',
-      duration: '4 Months',
-      stipend: '$400 - $600',
-      category: 'UI/UX Design',
-      skills: ['Figma', 'Framer', 'Prototyping'],
-      positions: 2,
-      deadline: '2026-06-20',
-      type: 'Contract',
-    },
-    {
-      id: 4,
-      title: 'Cybersecurity Analyst',
-      company: 'SecureNet Inc',
-      location: 'On-site',
-      duration: '3 Months',
-      stipend: '$600 - $900',
-      category: 'Cybersecurity',
-      skills: ['Network Security', 'Pen Testing', 'Ethical Hacking'],
-      positions: 4,
-      deadline: '2026-07-01',
-      type: 'Full-time',
-    }
-  ];
+  const showFeedback = (message) => {
+    setFeedback(message);
+    window.setTimeout(() => setFeedback(''), 2500);
+  };
 
-  const categories = ['All', 'Web Development', 'AI & Machine Learning', 'UI/UX Design', 'Cybersecurity', 'Cloud Computing', 'Mobile App Development'];
+  const filteredInternships = useMemo(() => {
+    const filtered = INTERNSHIPS.filter(intern => {
+      const matchesSearch = intern.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           intern.company.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'All' || intern.category === selectedCategory;
+      const matchesType = selectedType === 'All' || intern.type === selectedType || intern.location === selectedType;
+      return matchesSearch && matchesCategory && matchesType;
+    });
 
-  const filteredInternships = internships.filter(intern => {
-    const matchesSearch = intern.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         intern.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || intern.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+    return filtered.toSorted((a, b) => {
+      const dateA = new Date(a.deadline).getTime();
+      const dateB = new Date(b.deadline).getTime();
+      return sortOrder === 'Deadline Soon' ? dateA - dateB : dateB - dateA;
+    });
+  }, [searchTerm, selectedCategory, selectedType, sortOrder]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredInternships.length / itemsPerPage);
@@ -95,6 +117,30 @@ const Internships = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const toggleSaved = (id) => {
+    setSavedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        showFeedback('Internship removed from saved list.');
+      } else {
+        next.add(id);
+        showFeedback('Internship saved.');
+      }
+      return next;
+    });
+  };
+
+  const handleShare = async (intern) => {
+    const shareUrl = `${window.location.origin}/apply?domain=${encodeURIComponent(intern.category)}`;
+    if (navigator.share) {
+      await navigator.share({ title: intern.title, text: `Apply for ${intern.title}`, url: shareUrl });
+      return;
+    }
+    await navigator.clipboard.writeText(shareUrl);
+    showFeedback('Application link copied to clipboard.');
   };
 
   return (
@@ -139,7 +185,7 @@ const Internships = () => {
                 <div className="space-y-3">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Categories</label>
                   <div className="space-y-2">
-                    {categories.map(cat => (
+                    {CATEGORIES.map(cat => (
                       <button
                         key={cat}
                         onClick={() => {
@@ -163,8 +209,20 @@ const Internships = () => {
                 <div className="space-y-3">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Job Type</label>
                   <div className="flex flex-wrap gap-2">
-                    {['Full-time', 'Part-time', 'Remote', 'On-site'].map(tag => (
-                      <button key={tag} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-600 dark:text-slate-400 hover:border-blue-600 transition-all">
+                    {JOB_TYPES.map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          setSelectedType(tag);
+                          setCurrentPage(1);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+                          selectedType === tag
+                            ? 'border-blue-600 bg-blue-600 text-white'
+                            : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-blue-600'
+                        }`}
+                      >
                         {tag}
                       </button>
                     ))}
@@ -178,9 +236,9 @@ const Internships = () => {
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
               <h4 className="text-xl font-black mb-4">Want specialized guidance?</h4>
               <p className="text-blue-100 text-sm mb-6 font-medium">Join our Mentorship program to get 1-on-1 assistance.</p>
-              <button className="w-full bg-white text-blue-600 py-3 rounded-xl font-black text-sm hover:bg-blue-50 transition-all">
+              <Link to="/contact" className="block text-center w-full bg-white text-blue-600 py-3 rounded-xl font-black text-sm hover:bg-blue-50 transition-all">
                 Learn More
-              </button>
+              </Link>
             </div>
           </aside>
 
@@ -192,12 +250,17 @@ const Internships = () => {
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Sort By:</span>
-                <button className="flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white">
-                  Newest First
+                <button type="button" onClick={() => setSortOrder(sortOrder === 'Newest First' ? 'Deadline Soon' : 'Newest First')} className="flex items-center gap-1 text-sm font-bold text-slate-900 dark:text-white">
+                  {sortOrder}
                   <ChevronDown size={16} />
                 </button>
               </div>
             </div>
+            {feedback && (
+              <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-300">
+                {feedback}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-6">
               {currentItems.length > 0 ? (
@@ -245,15 +308,20 @@ const Internships = () => {
                       </div>
                       <div className="flex flex-col md:items-end justify-between gap-4">
                         <div className="flex gap-2">
-                          <button className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:text-blue-600 transition-all">
-                            <Bookmark size={20} />
+                          <button
+                            type="button"
+                            onClick={() => toggleSaved(intern.id)}
+                            aria-label={savedIds.has(intern.id) ? 'Remove saved internship' : 'Save internship'}
+                            className={`p-3 bg-slate-50 dark:bg-slate-900 rounded-xl transition-all ${savedIds.has(intern.id) ? 'text-blue-600' : 'text-slate-600 dark:text-slate-400 hover:text-blue-600'}`}
+                          >
+                            <Bookmark size={20} fill={savedIds.has(intern.id) ? 'currentColor' : 'none'} />
                           </button>
-                          <button className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:text-blue-600 transition-all">
+                          <button type="button" onClick={() => handleShare(intern)} className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 rounded-xl hover:text-blue-600 transition-all">
                             <Share2 size={20} />
                           </button>
                         </div>
                         <Link 
-                          to={`/apply?domain=${intern.category}`}
+                          to={`/apply?domain=${encodeURIComponent(intern.category)}`}
                           className="btn-primary w-full md:w-auto px-8"
                         >
                           Apply Now

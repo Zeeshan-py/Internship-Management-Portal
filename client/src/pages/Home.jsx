@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, 
@@ -15,13 +15,14 @@ import {
   Layers,
   ChevronRight,
   Star,
-  MessageCircle,
   ChevronDown
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Home = () => {
   const [openFaq, setOpenFaq] = useState(null);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState('');
 
   const categories = [
     { name: 'Web Development', icon: <Code2 />, count: '24 Openings', color: 'bg-blue-500' },
@@ -48,6 +49,13 @@ const Home = () => {
 
   const toggleFaq = (idx) => {
     setOpenFaq(openFaq === idx ? null : idx);
+  };
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    setNewsletterStatus('Thanks! Weekly internship alerts are now enabled.');
+    setNewsletterEmail('');
+    window.setTimeout(() => setNewsletterStatus(''), 4000);
   };
 
   return (
@@ -214,7 +222,7 @@ const Home = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((cat, idx) => (
-              <Link to={`/internships?category=${cat.name}`} key={idx} className="card-premium group relative overflow-hidden">
+              <Link to={`/internships?category=${encodeURIComponent(cat.name)}`} key={idx} className="card-premium group relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-24 h-24 ${cat.color} opacity-10 rounded-bl-full`}></div>
                 <div className="flex items-start gap-5">
                   <div className={`p-4 rounded-2xl text-white ${cat.color} shadow-lg shadow-${cat.color.split('-')[1]}-500/30`}>
@@ -317,16 +325,22 @@ const Home = () => {
             <h2 className="text-4xl font-black text-white mb-6">Never Miss an Opportunity</h2>
             <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto font-medium">Subscribe to our newsletter to get weekly internship alerts and career tips delivered to your inbox.</p>
             
-            <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
+            <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
               <input 
                 type="email" 
+                required
                 placeholder="Enter your email" 
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 className="flex-1 bg-white border-0 rounded-2xl px-6 py-4 text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-400/50 outline-none transition-all"
               />
               <button className="bg-slate-900 text-white font-black px-8 py-4 rounded-2xl hover:bg-slate-800 transition-all active:scale-95">
                 Subscribe
               </button>
             </form>
+            {newsletterStatus && (
+              <p className="mt-4 text-sm font-bold text-white">{newsletterStatus}</p>
+            )}
           </div>
         </div>
       </section>

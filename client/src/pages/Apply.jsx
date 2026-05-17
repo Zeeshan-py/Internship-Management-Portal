@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Send, 
   CheckCircle2, 
   AlertCircle, 
   Loader2, 
   User, 
-  Mail, 
-  Phone, 
   Upload, 
   Briefcase, 
   ChevronRight, 
@@ -33,6 +31,7 @@ const Apply = () => {
     experience: 'Fresher',
     education: '',
     skills: '',
+    resumeUrl: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -44,7 +43,25 @@ const Apply = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const nextStep = () => setStep(step + 1);
+  const validateCurrentStep = () => {
+    const stepFields = {
+      1: ['name', 'email', 'phone', 'education'],
+      2: ['domain', 'experience', 'skills', 'resumeUrl'],
+    };
+    const missingField = stepFields[step]?.find(field => !formData[field]?.trim());
+    if (missingField) {
+      setStatus({ type: 'error', message: 'Please complete all required fields before continuing.' });
+      return false;
+    }
+    setStatus({ type: '', message: '' });
+    return true;
+  };
+
+  const nextStep = () => {
+    if (validateCurrentStep()) {
+      setStep(step + 1);
+    }
+  };
   const prevStep = () => setStep(step - 1);
 
   const handleSubmit = async (e) => {
@@ -53,7 +70,7 @@ const Apply = () => {
     setStatus({ type: '', message: '' });
 
     try {
-      const response = await api.post('/applications', formData);
+      await api.post('/applications', formData);
       setStatus({ type: 'success', message: 'Application submitted successfully! Redirecting...' });
       setTimeout(() => navigate('/'), 3000);
     } catch (error) {
@@ -162,7 +179,7 @@ const Apply = () => {
                   <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Resume / CV Link</label>
                   <div className="relative">
                     <Upload className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600" size={18} />
-                    <input type="url" placeholder="Google Drive or Dropbox link" className="input-field pl-12" />
+                    <input name="resumeUrl" type="url" required value={formData.resumeUrl} onChange={handleChange} placeholder="Google Drive or Dropbox link" className="input-field pl-12" />
                   </div>
                 </div>
               </div>

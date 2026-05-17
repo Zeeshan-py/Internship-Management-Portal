@@ -1,6 +1,5 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { Briefcase, Calendar, MapPin, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const InternshipCard = ({ domain, icon: Icon, description }) => {

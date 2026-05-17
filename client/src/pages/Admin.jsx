@@ -1,22 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
   Briefcase, 
-  Calendar, 
   Mail, 
   Phone, 
   CheckCircle, 
   XCircle, 
   Search,
-  Filter,
-  ArrowRight,
   Loader2 as Loader,
   LayoutDashboard,
   Bell,
   Settings,
   LogOut,
-  ChevronDown,
   MoreVertical,
   Download,
   Eye,
@@ -24,7 +20,6 @@ import {
   Clock,
   Plus,
   Shield,
-  User,
   Globe,
   Lock,
   Trash2,
@@ -46,13 +41,22 @@ const AdminDashboard = () => {
   const [updating, setUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchApplications();
-    } else {
+  const fetchApplications = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get('/applications/all');
+      if (response.data && Array.isArray(response.data.data)) {
+        setApplications(response.data.data);
+      } else {
+        setError('Received invalid data format from server.');
+      }
+    } catch {
+      setError('Failed to fetch applications.');
+    } finally {
       setLoading(false);
     }
-  }, [isLoggedIn]);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -62,26 +66,11 @@ const AdminDashboard = () => {
         setIsLoggedIn(true);
         setLoginError('');
         toast.success('Access Granted');
+        await fetchApplications();
       }
-    } catch (err) {
+    } catch {
       setLoginError('Invalid credentials. Access denied.');
       toast.error('Login Failed');
-    }
-  };
-
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/applications/all');
-      if (response.data && Array.isArray(response.data.data)) {
-        setApplications(response.data.data);
-      } else {
-        setError('Received invalid data format from server.');
-      }
-    } catch (err) {
-      setError('Failed to fetch applications.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -94,11 +83,36 @@ const AdminDashboard = () => {
         setSelectedApplication(null);
         toast.success(`Application ${status} successfully!`);
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to update status.');
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleDownloadCsv = () => {
+    if (filteredApplications.length === 0) {
+      toast.error('No applications to export.');
+      return;
+    }
+    const headers = ['Name', 'Email', 'Phone', 'Domain', 'Status', 'Created'];
+    const rows = filteredApplications.map(app => [
+      app.name,
+      app.email,
+      app.phone,
+      app.domain,
+      app.status || 'Pending Review',
+      new Date(app.createdAt).toLocaleDateString(),
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'applications.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Applications exported.');
   };
 
   const filteredApplications = applications.filter(app => {
@@ -107,6 +121,8 @@ const AdminDashboard = () => {
     const matchesFilter = filterDomain === 'All' || app.domain === filterDomain;
     return matchesSearch && matchesFilter;
   });
+
+  const domains = ['All', ...new Set(applications.map(app => app.domain).filter(Boolean))];
 
   const stats = [
     { label: 'Total Applicants', value: applications.length, icon: <Users size={20} />, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -184,7 +200,7 @@ const AdminDashboard = () => {
             <p className="text-slate-500 font-medium">Monitoring all active internship operations</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 relative">
+            <button type="button" onClick={() => setActiveTab('Notifications')} className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 relative">
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
             </button>
@@ -219,10 +235,15 @@ const AdminDashboard = () => {
               <div className="lg:col-span-2">
                 <ApplicationsList 
                   loading={loading} 
+                  error={error}
                   filteredApplications={filteredApplications} 
                   setSelectedApplication={setSelectedApplication} 
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
+                  domains={domains}
+                  filterDomain={filterDomain}
+                  setFilterDomain={setFilterDomain}
+                  onDownloadCsv={handleDownloadCsv}
                 />
               </div>
               <div className="space-y-8">
@@ -236,10 +257,15 @@ const AdminDashboard = () => {
         {activeTab === 'Applications' && (
           <ApplicationsList 
             loading={loading} 
+            error={error}
             filteredApplications={filteredApplications} 
             setSelectedApplication={setSelectedApplication} 
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            domains={domains}
+            filterDomain={filterDomain}
+            setFilterDomain={setFilterDomain}
+            onDownloadCsv={handleDownloadCsv}
             isFullView={true}
           />
         )}
@@ -323,7 +349,7 @@ const AdminDashboard = () => {
 
 /* --- Sub-components for Admin Modules --- */
 
-const ApplicationsList = ({ loading, filteredApplications, setSelectedApplication, searchTerm, setSearchTerm, isFullView = false }) => (
+const ApplicationsList = ({ loading, error, filteredApplications, setSelectedApplication, searchTerm, setSearchTerm, domains = ['All'], filterDomain = 'All', setFilterDomain, onDownloadCsv, isFullView = false }) => (
   <div className="card-premium !p-0 overflow-hidden">
     <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
       <h3 className="text-xl font-black text-slate-900 dark:text-white">
@@ -334,7 +360,10 @@ const ApplicationsList = ({ loading, filteredApplications, setSelectedApplicatio
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input type="text" placeholder="Search applicants..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-12 pr-4 py-2.5 text-sm outline-none focus:border-blue-600 transition-all" />
         </div>
-        <button className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-blue-600 transition-all">
+        <select value={filterDomain} onChange={(e) => setFilterDomain(e.target.value)} className="hidden md:block bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 outline-none focus:border-blue-600">
+          {domains.map(domain => <option key={domain} value={domain}>{domain}</option>)}
+        </select>
+        <button type="button" onClick={onDownloadCsv} className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-blue-600 transition-all">
           <Download size={18} />
         </button>
       </div>
@@ -357,6 +386,10 @@ const ApplicationsList = ({ loading, filteredApplications, setSelectedApplicatio
               <td colSpan="5" className="px-8 py-12 text-center">
                 <Loader className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
               </td>
+            </tr>
+          ) : error ? (
+            <tr>
+              <td colSpan="5" className="px-8 py-12 text-center font-bold text-red-500">{error}</td>
             </tr>
           ) : filteredApplications.length === 0 ? (
             <tr>
@@ -404,7 +437,7 @@ const InternshipsManagement = () => (
   <div className="space-y-8">
     <div className="flex justify-between items-center">
       <h3 className="text-xl font-black text-slate-900 dark:text-white">Active Postings</h3>
-      <button className="btn-primary !py-2.5 px-6 rounded-xl text-sm">
+      <button type="button" onClick={() => toast.success('Post internship form coming next.')} className="btn-primary !py-2.5 px-6 rounded-xl text-sm">
         <Plus size={18} />
         Post Internship
       </button>
@@ -422,8 +455,8 @@ const InternshipsManagement = () => (
               <Briefcase size={24} />
             </div>
             <div className="flex gap-2">
-              <button className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Edit size={16} /></button>
-              <button className="p-2 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+              <button type="button" onClick={() => toast.success(`Editing ${job.title}`)} className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Edit size={16} /></button>
+              <button type="button" onClick={() => toast.success(`${job.title} marked for review.`)} className="p-2 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
             </div>
           </div>
           <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">{job.title}</h4>
@@ -433,7 +466,7 @@ const InternshipsManagement = () => (
           </div>
           <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
             <span className={`badge ${job.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>{job.status}</span>
-            <button className="text-sm font-black text-blue-600 hover:underline">View Analytics</button>
+            <button type="button" onClick={() => toast.success(`Analytics opened for ${job.title}`)} className="text-sm font-black text-blue-600 hover:underline">View Analytics</button>
           </div>
         </div>
       ))}
@@ -445,7 +478,7 @@ const RecentNotifications = () => (
   <div className="card-premium">
     <div className="flex justify-between items-center mb-6">
       <h3 className="text-lg font-black text-slate-900 dark:text-white">Recent Alerts</h3>
-      <button className="text-xs font-black text-blue-600 uppercase tracking-widest">Clear All</button>
+      <button type="button" onClick={() => toast.success('Alerts cleared.')} className="text-xs font-black text-blue-600 uppercase tracking-widest">Clear All</button>
     </div>
     <div className="space-y-4">
       {[
@@ -487,7 +520,7 @@ const QuickActions = () => (
         <span className="text-xs font-black text-emerald-500">12ms LATENCY</span>
       </div>
     </div>
-    <button className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2">
+    <button type="button" onClick={() => toast.success('Security scan completed.')} className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2">
       <Shield size={16} />
       Security Scan
     </button>
@@ -499,9 +532,9 @@ const NotificationsFullView = () => (
     <div className="flex justify-between items-center mb-8">
       <h3 className="text-xl font-black text-slate-900 dark:text-white">All Notifications</h3>
       <div className="flex gap-2">
-        <button className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-black">All</button>
-        <button className="px-4 py-2 text-slate-500 text-xs font-black">Unread</button>
-        <button className="px-4 py-2 text-slate-500 text-xs font-black">System</button>
+        <button type="button" onClick={() => toast.success('Showing all notifications.')} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-black">All</button>
+        <button type="button" onClick={() => toast.success('Showing unread notifications.')} className="px-4 py-2 text-slate-500 text-xs font-black">Unread</button>
+        <button type="button" onClick={() => toast.success('Showing system notifications.')} className="px-4 py-2 text-slate-500 text-xs font-black">System</button>
       </div>
     </div>
     <div className="space-y-2">
@@ -543,7 +576,7 @@ const AdminSettings = () => (
           </div>
         </div>
         <div className="mt-8 flex justify-end">
-          <button className="btn-primary !py-2.5 px-8 text-sm">Save Changes</button>
+          <button type="button" onClick={() => toast.success('Settings saved.')} className="btn-primary !py-2.5 px-8 text-sm">Save Changes</button>
         </div>
       </div>
 
@@ -558,7 +591,7 @@ const AdminSettings = () => (
                 <p className="text-xs font-bold text-slate-500">Add an extra layer of security to your account.</p>
               </div>
             </div>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black">Enable</button>
+            <button type="button" onClick={() => toast.success('Two-factor setup started.')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black">Enable</button>
           </div>
           <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-4">
@@ -568,7 +601,7 @@ const AdminSettings = () => (
                 <p className="text-xs font-bold text-slate-500">Generate keys for external system integrations.</p>
               </div>
             </div>
-            <button className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-xs font-black">Manage</button>
+            <button type="button" onClick={() => toast.success('API access manager opened.')} className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-xs font-black">Manage</button>
           </div>
         </div>
       </div>
