@@ -433,46 +433,132 @@ const ApplicationsList = ({ loading, error, filteredApplications, setSelectedApp
   </div>
 );
 
-const InternshipsManagement = () => (
-  <div className="space-y-8">
-    <div className="flex justify-between items-center">
-      <h3 className="text-xl font-black text-slate-900 dark:text-white">Active Postings</h3>
-      <button type="button" onClick={() => toast.success('Post internship form coming next.')} className="btn-primary !py-2.5 px-6 rounded-xl text-sm">
-        <Plus size={18} />
-        Post Internship
-      </button>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {[
-        { title: 'Web Development Intern', applicants: 42, status: 'Active', date: '2 days ago' },
-        { title: 'AI Research Assistant', applicants: 18, status: 'Active', date: '5 days ago' },
-        { title: 'UI/UX Design Intern', applicants: 29, status: 'Active', date: '1 week ago' },
-        { title: 'Cybersecurity Analyst', applicants: 12, status: 'Paused', date: '2 weeks ago' },
-      ].map((job, i) => (
-        <div key={i} className="card-premium group">
-          <div className="flex justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-600/10 text-blue-600 rounded-xl flex items-center justify-center">
-              <Briefcase size={24} />
+const InternshipsManagement = () => {
+  const [internships, setInternships] = useState([
+    { id: 1, title: 'Web Development Intern', applicants: 42, status: 'Active', date: '2 days ago', description: 'Build modern web apps with React and Node.js', duration: '3 months', location: 'Remote' },
+    { id: 2, title: 'AI Research Assistant', applicants: 18, status: 'Active', date: '5 days ago', description: 'Assist in AI/ML research projects', duration: '6 months', location: 'On-site' },
+    { id: 3, title: 'UI/UX Design Intern', applicants: 29, status: 'Active', date: '1 week ago', description: 'Design user interfaces and experiences', duration: '3 months', location: 'Hybrid' },
+    { id: 4, title: 'Cybersecurity Analyst', applicants: 12, status: 'Paused', date: '2 weeks ago', description: 'Monitor and analyze security threats', duration: '4 months', location: 'Remote' },
+  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
+  const [form, setForm] = useState({ title: '', description: '', duration: '3 months', location: 'Remote', status: 'Active' });
+
+  const openCreate = () => { setEditingJob(null); setForm({ title: '', description: '', duration: '3 months', location: 'Remote', status: 'Active' }); setShowModal(true); };
+  const openEdit = (job) => { setEditingJob(job); setForm({ title: job.title, description: job.description || '', duration: job.duration || '3 months', location: job.location || 'Remote', status: job.status }); setShowModal(true); };
+
+  const handleSave = () => {
+    if (!form.title.trim()) { toast.error('Internship title is required.'); return; }
+    if (editingJob) {
+      setInternships(prev => prev.map(j => j.id === editingJob.id ? { ...j, ...form } : j));
+      toast.success(`"${form.title}" updated successfully!`);
+    } else {
+      const newJob = { id: Date.now(), ...form, applicants: 0, date: 'Just now' };
+      setInternships(prev => [newJob, ...prev]);
+      toast.success(`"${form.title}" posted successfully!`);
+    }
+    setShowModal(false);
+  };
+
+  const handleDelete = (job) => {
+    setInternships(prev => prev.filter(j => j.id !== job.id));
+    toast.success(`"${job.title}" has been removed.`);
+  };
+
+  const toggleStatus = (job) => {
+    const next = job.status === 'Active' ? 'Paused' : 'Active';
+    setInternships(prev => prev.map(j => j.id === job.id ? { ...j, status: next } : j));
+    toast.success(`"${job.title}" is now ${next}.`);
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-black text-slate-900 dark:text-white">Active Postings</h3>
+        <button type="button" onClick={openCreate} className="btn-primary !py-2.5 px-6 rounded-xl text-sm">
+          <Plus size={18} />
+          Post Internship
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {internships.map((job) => (
+          <div key={job.id} className="card-premium group">
+            <div className="flex justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-600/10 text-blue-600 rounded-xl flex items-center justify-center">
+                <Briefcase size={24} />
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => openEdit(job)} className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Edit size={16} /></button>
+                <button type="button" onClick={() => handleDelete(job)} className="p-2 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => toast.success(`Editing ${job.title}`)} className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Edit size={16} /></button>
-              <button type="button" onClick={() => toast.success(`${job.title} marked for review.`)} className="p-2 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+            <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">{job.title}</h4>
+            {job.description && <p className="text-xs text-slate-500 mb-3 line-clamp-2">{job.description}</p>}
+            <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-6">
+              <span className="flex items-center gap-1"><Users size={12} /> {job.applicants} Applicants</span>
+              <span className="flex items-center gap-1"><Clock size={12} /> {job.date}</span>
+            </div>
+            <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button type="button" onClick={() => toggleStatus(job)} className={`badge cursor-pointer ${job.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>{job.status}</button>
+              <span className="text-[10px] font-bold text-slate-400">{job.duration} · {job.location}</span>
             </div>
           </div>
-          <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">{job.title}</h4>
-          <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-6">
-            <span className="flex items-center gap-1"><Users size={12} /> {job.applicants} Applicants</span>
-            <span className="flex items-center gap-1"><Clock size={12} /> {job.date}</span>
+        ))}
+      </div>
+
+      {/* Post / Edit Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden">
+              <div className="p-8">
+                <div className="flex justify-between items-center mb-8">
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">{editingJob ? 'Edit Internship' : 'Post New Internship'}</h3>
+                  <button onClick={() => setShowModal(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:bg-slate-200 transition-all"><XCircle size={20} /></button>
+                </div>
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Title *</label>
+                    <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Frontend Developer Intern" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none transition-all" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Description</label>
+                    <textarea rows="3" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe the internship role..." className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none resize-none transition-all" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Duration</label>
+                      <select value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none">
+                        {['1 month','2 months','3 months','4 months','6 months','12 months'].map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Location</label>
+                      <select value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none">
+                        {['Remote','On-site','Hybrid'].map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Status</label>
+                    <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none">
+                      <option value="Active">Active</option>
+                      <option value="Paused">Paused</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-8 flex gap-4">
+                  <button onClick={handleSave} className="flex-1 btn-primary !py-3.5 rounded-xl text-sm">{editingJob ? 'Save Changes' : 'Publish Internship'}</button>
+                  <button onClick={() => setShowModal(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3.5 rounded-xl font-black text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancel</button>
+                </div>
+              </div>
+            </motion.div>
           </div>
-          <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
-            <span className={`badge ${job.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>{job.status}</span>
-            <button type="button" onClick={() => toast.success(`Analytics opened for ${job.title}`)} className="text-sm font-black text-blue-600 hover:underline">View Analytics</button>
-          </div>
-        </div>
-      ))}
+        )}
+      </AnimatePresence>
     </div>
-  </div>
-);
+  );
+};
 
 const RecentNotifications = () => (
   <div className="card-premium">
@@ -527,109 +613,182 @@ const QuickActions = () => (
   </div>
 );
 
-const NotificationsFullView = () => (
-  <div className="card-premium">
-    <div className="flex justify-between items-center mb-8">
-      <h3 className="text-xl font-black text-slate-900 dark:text-white">All Notifications</h3>
-      <div className="flex gap-2">
-        <button type="button" onClick={() => toast.success('Showing all notifications.')} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-black">All</button>
-        <button type="button" onClick={() => toast.success('Showing unread notifications.')} className="px-4 py-2 text-slate-500 text-xs font-black">Unread</button>
-        <button type="button" onClick={() => toast.success('Showing system notifications.')} className="px-4 py-2 text-slate-500 text-xs font-black">System</button>
-      </div>
-    </div>
-    <div className="space-y-2">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className={`p-4 rounded-2xl flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer ${i < 3 ? 'border-l-4 border-blue-600 bg-blue-50/50 dark:bg-blue-600/5' : ''}`}>
-          <div className="flex gap-4 items-center">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${i % 2 === 0 ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
-              {i % 2 === 0 ? <Users size={18} /> : <Briefcase size={18} />}
-            </div>
-            <div>
-              <p className="font-black text-slate-900 dark:text-white">System Notification #{i + 1024}</p>
-              <p className="text-xs font-bold text-slate-500">A new action was performed on the administrative console.</p>
-            </div>
-          </div>
-          <span className="text-xs font-bold text-slate-400">12:4{i} PM</span>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+const NotificationsFullView = () => {
+  const allNotifications = [
+    { id: 1024, title: 'New Application Received', detail: 'A new internship application has been submitted for the Web Development Intern position by Ahmed Khan. The applicant has 2 years of experience in React.js and Node.js development. Please review the application in the Applications tab.', time: '12:40 PM', type: 'application', read: false },
+    { id: 1025, title: 'Internship Status Updated', detail: 'The "AI Research Assistant" internship posting has been updated from Paused to Active. This posting will now be visible to applicants on the public portal. 18 existing applicants will be notified of the reactivation.', time: '12:41 PM', type: 'system', read: false },
+    { id: 1026, title: 'Bulk Applications Export', detail: 'An administrator exported 42 application records from the Web Development Intern posting as CSV. The download was initiated from the Applications dashboard panel at 12:42 PM.', time: '12:42 PM', type: 'system', read: false },
+    { id: 1027, title: 'System Backup Completed', detail: 'The scheduled daily database backup has been completed successfully. Backup size: 128 MB. All collections including Applications, Internships, and Admin settings have been archived. Next backup scheduled in 24 hours.', time: '12:43 PM', type: 'system', read: true },
+    { id: 1028, title: 'Application Approved', detail: 'The application from Sara Malik for the UI/UX Design Intern position has been approved by Admin User. An automated confirmation email has been sent to the applicant with onboarding instructions.', time: '12:44 PM', type: 'application', read: true },
+    { id: 1029, title: 'New Contact Message', detail: 'A new contact form submission was received from Hamza Ali regarding partnership inquiry. The message has been logged in the contact queue and is awaiting admin review.', time: '12:45 PM', type: 'application', read: true },
+    { id: 1030, title: 'Security Alert', detail: 'An unusual login attempt was detected from IP 192.168.1.45. The attempt was blocked by the firewall. Please verify your recent login activity and consider enabling two-factor authentication for added security.', time: '12:46 PM', type: 'system', read: true },
+    { id: 1031, title: 'Storage Usage Warning', detail: 'Database storage usage has reached 85% capacity (4.25 GB of 5 GB). Consider archiving old application records or upgrading your storage plan to avoid service interruption.', time: '12:47 PM', type: 'system', read: true },
+  ];
 
-const AdminSettings = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <div className="lg:col-span-2 space-y-8">
-      <div className="card-premium">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8">Account Profile</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Full Name</label>
-            <input type="text" defaultValue="Admin User" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Email Address</label>
-            <input type="email" defaultValue="admin@teyzix.core" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none" />
-          </div>
-          <div className="col-span-2 space-y-2">
-            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Bio</label>
-            <textarea rows="4" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none resize-none">Managing the platform infrastructure and student onboarding processes.</textarea>
-          </div>
+  const [notifications, setNotifications] = useState(allNotifications);
+  const [filter, setFilter] = useState('All');
+  const [expandedId, setExpandedId] = useState(null);
+
+  const filtered = notifications.filter(n => {
+    if (filter === 'Unread') return !n.read;
+    if (filter === 'System') return n.type === 'system';
+    return true;
+  });
+
+  const handleClick = (notif) => {
+    setExpandedId(expandedId === notif.id ? null : notif.id);
+    if (!notif.read) {
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  return (
+    <div className="card-premium">
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-3">
+          <h3 className="text-xl font-black text-slate-900 dark:text-white">All Notifications</h3>
+          {unreadCount > 0 && <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{unreadCount} new</span>}
         </div>
-        <div className="mt-8 flex justify-end">
-          <button type="button" onClick={() => toast.success('Settings saved.')} className="btn-primary !py-2.5 px-8 text-sm">Save Changes</button>
+        <div className="flex gap-2">
+          {['All', 'Unread', 'System'].map(tab => (
+            <button key={tab} type="button" onClick={() => setFilter(tab)} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${filter === tab ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>{tab}</button>
+          ))}
         </div>
       </div>
-
-      <div className="card-premium">
-        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8">Security & Privacy</h3>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-600/10 text-blue-600 rounded-xl"><Lock size={20} /></div>
-              <div>
-                <p className="font-black text-slate-900 dark:text-white">Two-Factor Authentication</p>
-                <p className="text-xs font-bold text-slate-500">Add an extra layer of security to your account.</p>
+      <div className="space-y-2">
+        {filtered.length === 0 ? (
+          <p className="text-center py-12 font-bold text-slate-400">No notifications in this category.</p>
+        ) : filtered.map((notif) => (
+          <div key={notif.id}>
+            <div onClick={() => handleClick(notif)} className={`p-4 rounded-2xl flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer ${!notif.read ? 'border-l-4 border-blue-600 bg-blue-50/50 dark:bg-blue-600/5' : ''}`}>
+              <div className="flex gap-4 items-center">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${notif.type === 'application' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30'}`}>
+                  {notif.type === 'application' ? <Users size={18} /> : <Briefcase size={18} />}
+                </div>
+                <div>
+                  <p className={`font-black text-slate-900 dark:text-white ${!notif.read ? '' : 'opacity-70'}`}>{notif.title}</p>
+                  <p className="text-xs font-bold text-slate-500">{expandedId === notif.id ? 'Click to collapse' : notif.detail.slice(0, 60) + '...'}</p>
+                </div>
               </div>
+              <span className="text-xs font-bold text-slate-400 shrink-0 ml-4">{notif.time}</span>
             </div>
-            <button type="button" onClick={() => toast.success('Two-factor setup started.')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black">Enable</button>
+            <AnimatePresence>
+              {expandedId === notif.id && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                  <div className="mx-4 mb-2 p-5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{notif.detail}</p>
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <span className={`badge ${notif.type === 'application' ? 'badge-blue' : 'badge-purple'}`}>{notif.type}</span>
+                      <span className="text-[10px] font-bold text-slate-400">ID: #{notif.id} · {notif.time}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-600/10 text-purple-600 rounded-xl"><Globe size={20} /></div>
-              <div>
-                <p className="font-black text-slate-900 dark:text-white">Public API Access</p>
-                <p className="text-xs font-bold text-slate-500">Generate keys for external system integrations.</p>
-              </div>
-            </div>
-            <button type="button" onClick={() => toast.success('API access manager opened.')} className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-xs font-black">Manage</button>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
+  );
+};
 
-    <div className="space-y-8">
-      <div className="card-premium flex flex-col items-center text-center">
-        <div className="w-24 h-24 bg-blue-600 text-white flex items-center justify-center font-black text-4xl rounded-3xl shadow-xl shadow-blue-600/20 mb-6">A</div>
-        <h4 className="text-xl font-black text-slate-900 dark:text-white">Admin User</h4>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Super Administrator</p>
-        <div className="w-full h-[1px] bg-slate-100 dark:bg-slate-800 my-6"></div>
-        <div className="w-full space-y-4">
-          <div className="flex justify-between text-sm">
-            <span className="font-bold text-slate-400">Status</span>
-            <span className="font-black text-emerald-500">Active Now</span>
+const AdminSettings = () => {
+  const [profile, setProfile] = useState({ name: 'Admin User', email: 'admin@teyzix.core', bio: 'Managing the platform infrastructure and student onboarding processes.' });
+  const [saved, setSaved] = useState(false);
+  const [twoFA, setTwoFA] = useState(false);
+
+  const handleSave = () => {
+    if (!profile.name.trim()) { toast.error('Name is required.'); return; }
+    if (!profile.email.trim()) { toast.error('Email is required.'); return; }
+    setSaved(true);
+    toast.success('Profile settings saved successfully!');
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2 space-y-8">
+        <div className="card-premium">
+          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8">Account Profile</h3>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Full Name</label>
+              <input type="text" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none transition-all text-slate-900 dark:text-white" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Email Address</label>
+              <input type="email" value={profile.email} onChange={e => setProfile({ ...profile, email: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none transition-all text-slate-900 dark:text-white" />
+            </div>
+            <div className="col-span-2 space-y-2">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Bio</label>
+              <textarea rows="4" value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none resize-none transition-all text-slate-900 dark:text-white" />
+            </div>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="font-bold text-slate-400">Last Login</span>
-            <span className="font-black text-slate-900 dark:text-white">10:42 AM</span>
+          <div className="mt-8 flex justify-end">
+            <button type="button" onClick={handleSave} className={`btn-primary !py-2.5 px-8 text-sm transition-all ${saved ? '!bg-emerald-600 !shadow-emerald-600/20' : ''}`}>
+              {saved ? '✓ Saved!' : 'Save Changes'}
+            </button>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="font-bold text-slate-400">Permissions</span>
-            <span className="font-black text-slate-900 dark:text-white">Owner</span>
+        </div>
+
+        <div className="card-premium">
+          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8">Security & Privacy</h3>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-600/10 text-blue-600 rounded-xl"><Lock size={20} /></div>
+                <div>
+                  <p className="font-black text-slate-900 dark:text-white">Two-Factor Authentication</p>
+                  <p className="text-xs font-bold text-slate-500">{twoFA ? 'Two-factor authentication is active.' : 'Add an extra layer of security to your account.'}</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => { setTwoFA(!twoFA); toast.success(twoFA ? '2FA disabled.' : '2FA enabled successfully!'); }} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${twoFA ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}>{twoFA ? 'Enabled ✓' : 'Enable'}</button>
+            </div>
+            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-purple-600/10 text-purple-600 rounded-xl"><Globe size={20} /></div>
+                <div>
+                  <p className="font-black text-slate-900 dark:text-white">Public API Access</p>
+                  <p className="text-xs font-bold text-slate-500">Generate keys for external system integrations.</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => toast.success('API access manager opened.')} className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-xs font-black">Manage</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        <div className="card-premium flex flex-col items-center text-center">
+          <div className="w-24 h-24 bg-blue-600 text-white flex items-center justify-center font-black text-4xl rounded-3xl shadow-xl shadow-blue-600/20 mb-6">{profile.name.charAt(0).toUpperCase()}</div>
+          <h4 className="text-xl font-black text-slate-900 dark:text-white">{profile.name}</h4>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Super Administrator</p>
+          <p className="text-xs text-slate-400 mt-2 px-4 line-clamp-2">{profile.email}</p>
+          <div className="w-full h-[1px] bg-slate-100 dark:bg-slate-800 my-6"></div>
+          <div className="w-full space-y-4">
+            <div className="flex justify-between text-sm">
+              <span className="font-bold text-slate-400">Status</span>
+              <span className="font-black text-emerald-500">Active Now</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="font-bold text-slate-400">Last Login</span>
+              <span className="font-black text-slate-900 dark:text-white">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="font-bold text-slate-400">2FA</span>
+              <span className={`font-black ${twoFA ? 'text-emerald-500' : 'text-amber-500'}`}>{twoFA ? 'Enabled' : 'Disabled'}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="font-bold text-slate-400">Permissions</span>
+              <span className="font-black text-slate-900 dark:text-white">Owner</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default AdminDashboard;
