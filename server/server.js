@@ -5,6 +5,8 @@ import cors from 'cors';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
 import applicationRoutes from './routes/applicationRoutes.js';
+import internshipRoutes from './routes/internshipRoutes.js';
+import adminSettingsRoutes from './routes/adminSettingsRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -19,6 +21,8 @@ app.use(express.json());
 app.get('/', (req, res) => res.send('TEYZIX CORE API is running!'));
 app.get('/ping', (req, res) => res.send('pong'));
 app.use('/api/applications', applicationRoutes);
+app.use('/api/internships', internshipRoutes);
+app.use('/api/admin-settings', adminSettingsRoutes);
 
 app.use(errorHandler);
 

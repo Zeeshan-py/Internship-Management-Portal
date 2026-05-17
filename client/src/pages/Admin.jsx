@@ -434,42 +434,97 @@ const ApplicationsList = ({ loading, error, filteredApplications, setSelectedApp
 );
 
 const InternshipsManagement = () => {
-  const [internships, setInternships] = useState([
-    { id: 1, title: 'Web Development Intern', applicants: 42, status: 'Active', date: '2 days ago', description: 'Build modern web apps with React and Node.js', duration: '3 months', location: 'Remote' },
-    { id: 2, title: 'AI Research Assistant', applicants: 18, status: 'Active', date: '5 days ago', description: 'Assist in AI/ML research projects', duration: '6 months', location: 'On-site' },
-    { id: 3, title: 'UI/UX Design Intern', applicants: 29, status: 'Active', date: '1 week ago', description: 'Design user interfaces and experiences', duration: '3 months', location: 'Hybrid' },
-    { id: 4, title: 'Cybersecurity Analyst', applicants: 12, status: 'Paused', date: '2 weeks ago', description: 'Monitor and analyze security threats', duration: '4 months', location: 'Remote' },
-  ]);
+  const [internships, setInternships] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [form, setForm] = useState({ title: '', description: '', duration: '3 months', location: 'Remote', status: 'Active' });
+  const [saving, setSaving] = useState(false);
+
+  // Fetch internships from backend on mount
+  const fetchInternships = useCallback(async () => {
+    try {
+      setLoadingData(true);
+      const res = await api.get('/internships');
+      if (res.data?.data) setInternships(res.data.data);
+    } catch {
+      // Fallback to defaults if API fails
+      setInternships([
+        { _id: '1', title: 'Web Development Intern', applicants: 42, status: 'Active', description: 'Build modern web apps with React and Node.js', duration: '3 months', location: 'Remote', createdAt: new Date().toISOString() },
+        { _id: '2', title: 'AI Research Assistant', applicants: 18, status: 'Active', description: 'Assist in AI/ML research projects', duration: '6 months', location: 'On-site', createdAt: new Date().toISOString() },
+      ]);
+    } finally {
+      setLoadingData(false);
+    }
+  }, []);
+
+  useState(() => { fetchInternships(); });
 
   const openCreate = () => { setEditingJob(null); setForm({ title: '', description: '', duration: '3 months', location: 'Remote', status: 'Active' }); setShowModal(true); };
   const openEdit = (job) => { setEditingJob(job); setForm({ title: job.title, description: job.description || '', duration: job.duration || '3 months', location: job.location || 'Remote', status: job.status }); setShowModal(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim()) { toast.error('Internship title is required.'); return; }
-    if (editingJob) {
-      setInternships(prev => prev.map(j => j.id === editingJob.id ? { ...j, ...form } : j));
-      toast.success(`"${form.title}" updated successfully!`);
-    } else {
-      const newJob = { id: Date.now(), ...form, applicants: 0, date: 'Just now' };
-      setInternships(prev => [newJob, ...prev]);
-      toast.success(`"${form.title}" posted successfully!`);
+    setSaving(true);
+    try {
+      if (editingJob) {
+        const res = await api.put(`/internships/${editingJob._id}`, form);
+        if (res.data?.data) {
+          setInternships(prev => prev.map(j => j._id === editingJob._id ? res.data.data : j));
+          toast.success(`"${form.title}" updated successfully!`);
+        }
+      } else {
+        const res = await api.post('/internships', form);
+        if (res.data?.data) {
+          setInternships(prev => [res.data.data, ...prev]);
+          toast.success(`"${form.title}" posted successfully!`);
+        }
+      }
+      setShowModal(false);
+    } catch {
+      toast.error('Failed to save internship. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (job) => {
-    setInternships(prev => prev.filter(j => j.id !== job.id));
-    toast.success(`"${job.title}" has been removed.`);
+  const handleDelete = async (job) => {
+    try {
+      await api.delete(`/internships/${job._id}`);
+      setInternships(prev => prev.filter(j => j._id !== job._id));
+      toast.success(`"${job.title}" has been removed.`);
+    } catch {
+      toast.error('Failed to delete internship.');
+    }
   };
 
-  const toggleStatus = (job) => {
+  const toggleStatus = async (job) => {
     const next = job.status === 'Active' ? 'Paused' : 'Active';
-    setInternships(prev => prev.map(j => j.id === job.id ? { ...j, status: next } : j));
-    toast.success(`"${job.title}" is now ${next}.`);
+    try {
+      const res = await api.put(`/internships/${job._id}`, { status: next });
+      if (res.data?.data) {
+        setInternships(prev => prev.map(j => j._id === job._id ? res.data.data : j));
+        toast.success(`"${job.title}" is now ${next}.`);
+      }
+    } catch {
+      toast.error('Failed to update status.');
+    }
   };
+
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hour${hrs > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+  };
+
+  const inputCls = "w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-blue-600 outline-none transition-all";
 
   return (
     <div className="space-y-8">
@@ -480,76 +535,89 @@ const InternshipsManagement = () => {
           Post Internship
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {internships.map((job) => (
-          <div key={job.id} className="card-premium group">
-            <div className="flex justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-600/10 text-blue-600 rounded-xl flex items-center justify-center">
-                <Briefcase size={24} />
+
+      {loadingData ? (
+        <div className="flex justify-center py-16"><Loader className="w-8 h-8 text-blue-600 animate-spin" /></div>
+      ) : internships.length === 0 ? (
+        <div className="card-premium text-center py-16">
+          <Briefcase size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
+          <p className="text-lg font-black text-slate-400">No internships posted yet</p>
+          <p className="text-sm text-slate-500 mt-1">Click "Post Internship" to create your first posting.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {internships.map((job) => (
+            <div key={job._id} className="card-premium group">
+              <div className="flex justify-between mb-4">
+                <div className="w-12 h-12 bg-blue-600/10 text-blue-600 rounded-xl flex items-center justify-center">
+                  <Briefcase size={24} />
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => openEdit(job)} className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Edit size={16} /></button>
+                  <button type="button" onClick={() => handleDelete(job)} className="p-2 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => openEdit(job)} className="p-2 text-slate-400 hover:text-blue-600 transition-all"><Edit size={16} /></button>
-                <button type="button" onClick={() => handleDelete(job)} className="p-2 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+              <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">{job.title}</h4>
+              {job.description && <p className="text-xs text-slate-500 mb-3 line-clamp-2">{job.description}</p>}
+              <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-6">
+                <span className="flex items-center gap-1"><Users size={12} /> {job.applicants || 0} Applicants</span>
+                <span className="flex items-center gap-1"><Clock size={12} /> {timeAgo(job.createdAt)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button type="button" onClick={() => toggleStatus(job)} className={`badge cursor-pointer ${job.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>{job.status}</button>
+                <span className="text-[10px] font-bold text-slate-400">{job.duration || '3 months'} · {job.location || 'Remote'}</span>
               </div>
             </div>
-            <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">{job.title}</h4>
-            {job.description && <p className="text-xs text-slate-500 mb-3 line-clamp-2">{job.description}</p>}
-            <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-6">
-              <span className="flex items-center gap-1"><Users size={12} /> {job.applicants} Applicants</span>
-              <span className="flex items-center gap-1"><Clock size={12} /> {job.date}</span>
-            </div>
-            <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
-              <button type="button" onClick={() => toggleStatus(job)} className={`badge cursor-pointer ${job.status === 'Active' ? 'badge-green' : 'badge-amber'}`}>{job.status}</button>
-              <span className="text-[10px] font-bold text-slate-400">{job.duration} · {job.location}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Post / Edit Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md" onClick={() => setShowModal(false)}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden">
               <div className="p-8">
                 <div className="flex justify-between items-center mb-8">
                   <h3 className="text-2xl font-black text-slate-900 dark:text-white">{editingJob ? 'Edit Internship' : 'Post New Internship'}</h3>
-                  <button onClick={() => setShowModal(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:bg-slate-200 transition-all"><XCircle size={20} /></button>
+                  <button type="button" onClick={() => setShowModal(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:bg-slate-200 transition-all"><XCircle size={20} /></button>
                 </div>
                 <div className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Title *</label>
-                    <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Frontend Developer Intern" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none transition-all" />
+                    <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Frontend Developer Intern" className={inputCls} />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Description</label>
-                    <textarea rows="3" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe the internship role..." className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none resize-none transition-all" />
+                    <textarea rows="3" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe the internship role..." className={inputCls + " resize-none"} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Duration</label>
-                      <select value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none">
+                      <select value={form.duration} onChange={e => setForm({ ...form, duration: e.target.value })} className={inputCls}>
                         {['1 month','2 months','3 months','4 months','6 months','12 months'].map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Location</label>
-                      <select value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none">
+                      <select value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} className={inputCls}>
                         {['Remote','On-site','Hybrid'].map(l => <option key={l} value={l}>{l}</option>)}
                       </select>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Status</label>
-                    <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none">
+                    <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className={inputCls}>
                       <option value="Active">Active</option>
                       <option value="Paused">Paused</option>
                     </select>
                   </div>
                 </div>
                 <div className="mt-8 flex gap-4">
-                  <button onClick={handleSave} className="flex-1 btn-primary !py-3.5 rounded-xl text-sm">{editingJob ? 'Save Changes' : 'Publish Internship'}</button>
-                  <button onClick={() => setShowModal(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3.5 rounded-xl font-black text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancel</button>
+                  <button type="button" onClick={handleSave} disabled={saving} className="flex-1 btn-primary !py-3.5 rounded-xl text-sm">
+                    {saving ? <Loader size={18} className="animate-spin" /> : editingJob ? 'Save Changes' : 'Publish Internship'}
+                  </button>
+                  <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3.5 rounded-xl font-black text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancel</button>
                 </div>
               </div>
             </motion.div>
@@ -698,14 +766,52 @@ const AdminSettings = () => {
   const [profile, setProfile] = useState({ name: 'Admin User', email: 'admin@teyzix.core', bio: 'Managing the platform infrastructure and student onboarding processes.' });
   const [saved, setSaved] = useState(false);
   const [twoFA, setTwoFA] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
+  // Load settings from backend on mount
+  useState(() => {
+    (async () => {
+      try {
+        const res = await api.get('/admin-settings');
+        if (res.data?.data) {
+          const d = res.data.data;
+          setProfile({ name: d.name || 'Admin User', email: d.email || 'admin@teyzix.core', bio: d.bio || '' });
+          setTwoFA(d.twoFA || false);
+        }
+      } catch {
+        // Use defaults on failure
+      }
+    })();
+  });
+
+  const handleSave = async () => {
     if (!profile.name.trim()) { toast.error('Name is required.'); return; }
     if (!profile.email.trim()) { toast.error('Email is required.'); return; }
-    setSaved(true);
-    toast.success('Profile settings saved successfully!');
-    setTimeout(() => setSaved(false), 2000);
+    setSaving(true);
+    try {
+      await api.put('/admin-settings', { ...profile, twoFA });
+      setSaved(true);
+      toast.success('Profile settings saved permanently!');
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      toast.error('Failed to save settings.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleTwoFA = async () => {
+    const next = !twoFA;
+    try {
+      await api.put('/admin-settings', { ...profile, twoFA: next });
+      setTwoFA(next);
+      toast.success(next ? '2FA enabled successfully!' : '2FA disabled.');
+    } catch {
+      toast.error('Failed to update 2FA.');
+    }
+  };
+
+  const inputCls = "w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:border-blue-600 outline-none transition-all";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -715,20 +821,20 @@ const AdminSettings = () => {
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Full Name</label>
-              <input type="text" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none transition-all text-slate-900 dark:text-white" />
+              <input type="text" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className={inputCls} />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Email Address</label>
-              <input type="email" value={profile.email} onChange={e => setProfile({ ...profile, email: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none transition-all text-slate-900 dark:text-white" />
+              <input type="email" value={profile.email} onChange={e => setProfile({ ...profile, email: e.target.value })} className={inputCls} />
             </div>
             <div className="col-span-2 space-y-2">
               <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Bio</label>
-              <textarea rows="4" value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-5 py-3 text-sm focus:border-blue-600 outline-none resize-none transition-all text-slate-900 dark:text-white" />
+              <textarea rows="4" value={profile.bio} onChange={e => setProfile({ ...profile, bio: e.target.value })} className={inputCls + " resize-none"} />
             </div>
           </div>
           <div className="mt-8 flex justify-end">
-            <button type="button" onClick={handleSave} className={`btn-primary !py-2.5 px-8 text-sm transition-all ${saved ? '!bg-emerald-600 !shadow-emerald-600/20' : ''}`}>
-              {saved ? '✓ Saved!' : 'Save Changes'}
+            <button type="button" onClick={handleSave} disabled={saving} className={`btn-primary !py-2.5 px-8 text-sm transition-all ${saved ? '!bg-emerald-600 !shadow-emerald-600/20' : ''}`}>
+              {saving ? <Loader size={16} className="animate-spin" /> : saved ? '✓ Saved!' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -744,7 +850,7 @@ const AdminSettings = () => {
                   <p className="text-xs font-bold text-slate-500">{twoFA ? 'Two-factor authentication is active.' : 'Add an extra layer of security to your account.'}</p>
                 </div>
               </div>
-              <button type="button" onClick={() => { setTwoFA(!twoFA); toast.success(twoFA ? '2FA disabled.' : '2FA enabled successfully!'); }} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${twoFA ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}>{twoFA ? 'Enabled ✓' : 'Enable'}</button>
+              <button type="button" onClick={handleTwoFA} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${twoFA ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}>{twoFA ? 'Enabled ✓' : 'Enable'}</button>
             </div>
             <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-4">
